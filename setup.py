@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="blochsim",
-    version="0.0.1",
+    version="0.0.2",
     author="Kwang Eun Jang",
     author_email="kejang@stanford.edu",
     description="Python Bloch Simulator",
