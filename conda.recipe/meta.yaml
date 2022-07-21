@@ -1,0 +1,40 @@
+{% set name = "blochsim" %}
+{% set version = "0.0.1" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - pip
+    - python >=3.7
+  run:
+    - numpy >=1.20.0
+    - python >=3.7
+
+test:
+  imports:
+    - blochsim
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/kejang/blochsim
+  summary: Python Bloch Simulator
+  license: MIT
+  license_file: LICENSE.md
+
+extra:
+  recipe-maintainers:
+    - kejang
