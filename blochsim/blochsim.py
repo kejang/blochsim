@@ -13,7 +13,7 @@ def blochsim(b1, g, dt, r, df, t1, t2, m0=[0, 0, 1], gamma=4257.59):
         df (float): off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
-        gamma (float): gyromagnetic ratio in Hz/G
+        gamma (float): gyromagnetic ratio over 2*PI in Hz/G
 
     Returns:
         tuple: ms, a, b
@@ -76,15 +76,16 @@ def rotang_offres(g, r, df, dt, gamma):
         r: (3,) position vector in cm
         df: off-resonance in Hz
         dt: time-step in sec
-        gamma: gyromagnetic ratio in Hz/G
+        gamma: gyromagnetic ratio over 2*PI in Hz/G
 
-    Returns: 
+    Returns:
         float: rotation angle in radian
     """
 
     rotang = ((-1)                               # left-hand rotation
+              * dt                               # time step
               * (gamma * np.inner(g, r) + df)    # gradient and off-res
-              * 2.0 * np.pi * dt)
+              * 2.0 * np.pi)                     # Hz -> radian
 
     return rotang
 
@@ -95,7 +96,7 @@ def rotang_b1(b1, dt, gamma):
     Args:
         b1: RF waveform in Gauss, can be complex
         dt: time-step in sec
-        gamma: gyromagnetic ratio in Hz/G
+        gamma: gyromagnetic ratio over 2*PI in Hz/G
 
     Returns:
         tuple: (rotang_x, rotang_y) rotation angles around x- and y-axis
