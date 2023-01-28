@@ -22,14 +22,20 @@ def estimate_inversion_time(
         float: inversion time in sec    
     """
 
-    b1 = np.zeros(1, dtype='complex64')
-    g = np.zeros((1, 3), dtype='float32')
-    dt = [time_res]
+    _, a, b = blochsim(
+        b1=np.zeros(1, dtype='complex64'),
+        g=np.zeros((1, 3), dtype='float32'),
+        dt=[time_res],
+        r=r,
+        df=df,
+        t1=t1,
+        t2=t2
+    )
 
-    m = [0, 0, -1]
+    m = np.array([0, 0, -1], dtype='float32')
     ti = 0
     while m[-1] < 0:
-        m = blochsim(b1, g, dt, r, df, t1, t2, m0=m)[0][-1]
+        m = np.matmul(a, m) + b
         ti += time_res
 
     return ti
