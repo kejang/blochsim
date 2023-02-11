@@ -17,7 +17,13 @@ def rfscaleg(rf, t, gamma=4257.58):
     return rf / (2*np.pi*gamma*1e-3*dt)
 
 
-def hard(b1_max, flip_ang, RF_UPDATE_TIME=2, multiple_of_n=4, gamma=4257.58):
+def get_hard_pulse(
+    b1_max,
+    flip_ang,
+    RF_UPDATE_TIME=2,
+    multiple_of_n=4,
+    gamma=4257.58
+):
     """Returns a Hard pulse.
 
     Args:
