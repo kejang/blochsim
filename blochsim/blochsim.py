@@ -45,7 +45,10 @@ def blochsim(
         tuple: ms, a, b
     """
 
+    n = len(b1)
+
     if precision == 'double':
+        ms = np.zeros((n, 3), dtype='float64')
         b1 = np.array(b1, dtype='complex128')
         g = np.array(g, dtype='float64')
         r = np.array(r, dtype='float64')
@@ -54,6 +57,7 @@ def blochsim(
         b = np.zeros((3,), dtype='float64')
         blochsim_t = blochsim_t_64
     else:
+        ms = np.zeros((n, 3), dtype='float32')
         b1 = np.array(b1, dtype='complex64')
         g = np.array(g, dtype='float32')
         r = np.array(r, dtype='float32')
@@ -62,9 +66,7 @@ def blochsim(
         b = np.zeros((3,), dtype='float32')
         blochsim_t = blochsim_t_32
 
-    ms = []
-
-    for i in range(len(b1)):
+    for i in range(n):
         if is_static:
             r_t = r
         else:
@@ -74,7 +76,7 @@ def blochsim(
             b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
 
-        ms.append(m)
+        ms[i] = m
 
     return ms, a, b
 
@@ -113,7 +115,10 @@ def blochsim_const_flow(
         tuple: ms, a, b
     """
 
+    n = len(b1)
+
     if precision == 'double':
+        ms = np.zeros((n, 3), dtype='float64')
         b1 = np.array(b1, dtype='complex128')
         g = np.array(g, dtype='float64')
         r_t = np.array(r0, dtype='float64')
@@ -123,6 +128,7 @@ def blochsim_const_flow(
         b = np.zeros((3,), dtype='float64')
         blochsim_t = blochsim_t_64
     else:
+        ms = np.zeros((n, 3), dtype='float32')
         b1 = np.array(b1, dtype='complex64')
         g = np.array(g, dtype='float32')
         r_t = np.array(r0, dtype='float32')
@@ -132,13 +138,12 @@ def blochsim_const_flow(
         b = np.zeros((3,), dtype='float32')
         blochsim_t = blochsim_t_32
 
-    ms = []
-
     for i in range(len(b1)):
         m, a, b = blochsim_t(
             b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
-        ms.append(m)
+
+        ms[i] = m
 
         if (ignore_flow is None) or (not ignore_flow[i]):
             r_t += dt[i]*v_c
@@ -182,7 +187,10 @@ def blochsim_const_acc(
         tuple: ms, a, b
     """
 
+    n = len(b1)
+
     if precision == 'double':
+        ms = np.zeros((n, 3), dtype='float64')
         b1 = np.array(b1, dtype='complex128')
         g = np.array(g, dtype='float64')
         r_t = np.array(r0, dtype='float64')
@@ -193,6 +201,7 @@ def blochsim_const_acc(
         b = np.zeros((3,), dtype='float64')
         blochsim_t = blochsim_t_64
     else:
+        ms = np.zeros((n, 3), dtype='float32')
         b1 = np.array(b1, dtype='complex64')
         g = np.array(g, dtype='float32')
         r_t = np.array(r0, dtype='float32')
@@ -203,13 +212,12 @@ def blochsim_const_acc(
         b = np.zeros((3,), dtype='float32')
         blochsim_t = blochsim_t_32
 
-    ms = []
-
     for i in range(len(b1)):
         m, a, b = blochsim_t(
             b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
-        ms.append(m)
+
+        ms[i] = m
 
         if (ignore_flow is None) or (not ignore_flow[i]):
             r_t += v0*dt[i] + 0.5*a0*(dt[i]**2)
