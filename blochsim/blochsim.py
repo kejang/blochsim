@@ -1,69 +1,5 @@
 import numpy as np
-
-
-def blochsim_t(
-    b1_t,
-    g_t,
-    dt_t,
-    r_t,
-    df,
-    t1,
-    t2,
-    gamma,
-    m0,
-    a0,
-    b0,
-    dtype='float32',
-):
-    """Bloch simulator at instant t.
-
-    Args:
-        b1_t (float | complex): b1 in G, can be complex
-        g_t (list): (3,) gradient amplitude in G/cm (x,y,z)
-        dt_t (float): time-step in sec
-        r_t (list): (3,) position vector in cm (x,y,z)
-        df (float): off-resonance in Hz
-        t1 (float): T1 in sec
-        t2 (float): T2 in sec
-        gamma (float): gyromagnetic ratio over 2*PI in Hz/G
-        m0 (list): initial magnetization vector (x,y,z)
-        a0 (`ndarray`): (3, 3) initial propagation matrix
-        b0 (`ndarray`): (3,) initial propagation vector
-        dtype (str): dtype of real type ('float32', 'float64', ...)
-
-    Returns:
-        tuple: m, a, b
-    """
-
-    m = np.array(m0, dtype=dtype)
-
-    # rotation due to RF pulse, gradient, and off-resonance
-
-    rotang_x, rotang_y = rotang_b1(b1_t, dt_t, gamma)
-    rotang_z = rotang_offres(g_t, r_t, df, dt_t, gamma)
-
-    # convert rotation angles to rotation around arbitrary axis
-
-    rotax = np.array([rotang_x, rotang_y, rotang_z], dtype=dtype)
-    rotang = np.linalg.norm(rotax)
-
-    if np.isclose(rotang, 0):
-        rotmat = np.eye(3, dtype=dtype)
-    else:
-        rotmat = rotmat_around_arbitrary_axis(rotax, rotang, dtype=dtype)
-        m = np.matmul(rotmat, m)
-
-    # T1, T2 decay and T1 recovery
-
-    decay, recov = decay_and_recovery(t1, t2, dt_t, dtype=dtype)
-    m = np.matmul(decay, m) + recov
-
-    # update propagation equation
-
-    a = np.linalg.multi_dot([decay, rotmat, a0])
-    b = np.linalg.multi_dot([decay, rotmat, b0]) + recov
-
-    return m, a, b
+import numba as nb
 
 
 def blochsim(
@@ -76,7 +12,7 @@ def blochsim(
     t2,
     gamma=4257.59,
     m0=[0, 0, 1],
-    dtype='float32',
+    is_static=True,
 ):
     """Bloch simulator
 
@@ -90,28 +26,32 @@ def blochsim(
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
         m0 (list): (3,) initial magnetization vector (x,y,z)
-        dtype (str): dtype of real type ('float32', 'float64', ...)
 
     Returns:
         tuple: ms, a, b
     """
 
-    n = len(b1)
-    a = np.eye(3, dtype=dtype)
-    b = np.zeros((3,), dtype=dtype)
-    m = np.array(m0, dtype=dtype)
+    # type checking
+
+    b1 = np.array(b1, dtype='complex128')
+    g = np.array(g, dtype='float64')
+    r = np.array(r, dtype='float64')
+    m = np.array(m0, dtype='float64')
+
+    # initialization
+
+    a = np.eye(3, dtype='float64')
+    b = np.zeros((3,), dtype='float64')
     ms = []
 
-    is_static = not hasattr(r[0], '__iter__')
-
-    for i in range(n):
+    for i in range(len(b1)):
         if is_static:
             r_t = r
         else:
             r_t = r[i]
 
         m, a, b = blochsim_t(
-            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b, dtype
+            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
 
         ms.append(m)
@@ -130,7 +70,6 @@ def blochsim_const_flow(
     t2,
     gamma=4257.59,
     m0=[0, 0, 1],
-    dtype='float32',
     ignore_flow=None,
 ):
     """Bloch simulator
@@ -146,24 +85,29 @@ def blochsim_const_flow(
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
         m0 (list): (3,) initial magnetization vector (x,y,z)
-        dtype (str): dtype of real type ('float32', 'float64', ...)
         ignore_flow (None | list): ignore the flow at instances
 
     Returns:
         tuple: ms, a, b
     """
 
-    n = len(b1)
-    a = np.eye(3, dtype=dtype)
-    b = np.zeros((3,), dtype=dtype)
-    m = np.array(m0, dtype=dtype)
-    ms = []
-    r_t = np.array(r0, dtype=dtype)
-    v_c = np.array(v, dtype=dtype)
+    # type checking
 
-    for i in range(n):
+    b1 = np.array(b1, dtype='complex128')
+    g = np.array(g, dtype='float64')
+    r_t = np.array(r0, dtype='float64')
+    v_c = np.array(v, dtype='float64')
+    m = np.array(m0, dtype='float64')
+
+    # initialization
+
+    a = np.eye(3, dtype='float64')
+    b = np.zeros((3,), dtype='float64')
+    ms = []
+
+    for i in range(len(b1)):
         m, a, b = blochsim_t(
-            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b, dtype
+            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
         ms.append(m)
 
@@ -185,7 +129,6 @@ def blochsim_const_acc(
     t2,
     gamma=4257.59,
     m0=[0, 0, 1],
-    dtype='float32',
     ignore_flow=None,
 ):
     """Bloch simulator
@@ -202,26 +145,30 @@ def blochsim_const_acc(
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
         m0 (list): (3,) initial magnetization vector (x,y,z)
-        dtype (str): dtype of real type ('float32', 'float64', ...)
         ignore_flow (None | list): ignore the flow at instances
 
     Returns:
         tuple: ms, a, b
     """
 
-    n = len(b1)
-    a = np.eye(3, dtype=dtype)
-    b = np.zeros((3,), dtype=dtype)
-    m = np.array(m0, dtype=dtype)
+    # type checking
+
+    b1 = np.array(b1, dtype='complex128')
+    g = np.array(g, dtype='float64')
+    r_t = np.array(r0, dtype='float64')
+    v0 = np.array(v0, dtype='float64')
+    a0 = np.array(acc, dtype='float64')
+    m = np.array(m0, dtype='float64')
+
+    # initialization
+
+    a = np.eye(3, dtype='float64')
+    b = np.zeros((3,), dtype='float64')
     ms = []
 
-    r_t = np.array(r0, dtype=dtype)
-    v0 = np.array(v0, dtype=dtype)
-    a0 = np.array(acc, dtype=dtype)
-
-    for i in range(n):
+    for i in range(len(b1)):
         m, a, b = blochsim_t(
-            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b, dtype
+            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
         ms.append(m)
 
@@ -231,6 +178,17 @@ def blochsim_const_acc(
     return ms, a, b
 
 
+@nb.jit(nb.float64[:, :](nb.int64), nopython=True)
+def eye_f8(n):
+    out = np.zeros((n, n), dtype='float64')
+    for i in range(n):
+        out[i, i] = 1
+    return out
+
+
+@nb.jit(nb.float64(nb.float64[:], nb.float64[:], nb.float64, nb.float64,
+                   nb.float64),
+        nopython=True)
 def rotang_offres(g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance.
 
@@ -247,17 +205,21 @@ def rotang_offres(g, r, df, dt, gamma):
 
     rotang = ((-1)                               # left-hand rotation
               * dt                               # time step
-              * (gamma * np.inner(g, r) + df)    # gradient and off-res
+              * (gamma * np.sum(g*r) + df)       # gradient and off-res
               * 2.0 * np.pi)                     # Hz -> radian
 
     return rotang
 
 
+@nb.jit(
+    nb.types.UniTuple(nb.float64, 2)(nb.complex128, nb.float64, nb.float64),
+    nopython=True
+)
 def rotang_b1(b1, dt, gamma):
     """Returns rotation angles around x- and y-axis due to b1
 
     Args:
-        b1 (float | complex): RF waveform in Gauss, can be complex
+        b1 (complex): RF waveform in Gauss, can be complex
         dt (float): time-step in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
 
@@ -274,42 +236,53 @@ def rotang_b1(b1, dt, gamma):
     return rotang_x, rotang_y
 
 
-def decay_and_recovery(t1, t2, dt, dtype='float32'):
+@nb.jit(nb.float64[:, :](nb.float64, nb.float64, nb.float64), nopython=True)
+def get_decay_matrix(t1, t2, dt):
+    """Returns decay matrix.
+
+    Args:
+        t1 (float): T1 in sec
+        t2 (float): T2 in sec
+        dt (float): time-step in sec
+
+    Returns:
+        ndarray: decay matrix (3, 3)
+    """
+
+    decay = np.zeros((3, 3), dtype='float64')
+    decay[0, 0] = np.exp(-dt/t2)
+    decay[1, 1] = np.exp(-dt/t2)
+    decay[2, 2] = np.exp(-dt/t1)
+
+    return decay
+
+
+@nb.jit(nb.float64[:](nb.float64, nb.float64, nb.float64), nopython=True)
+def get_recovery_vector(t1, t2, dt):
     """Returns decay matrix and recovery vector.
 
     Args:
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         dt (float): time-step in sec
-        dtype (str): dtype of real type ('float32', 'float64', ...)
 
     Returns:
-        tuple: (decay, recov)
-
-    Notes:
-        - decay: (3, 3)-matrix
-        - recovery: (3,)-vector
-        - m_new = decay * m_old + recovery
+        ndarray: recovery vector (3,)
     """
 
-    decay = np.zeros((3, 3), dtype=dtype)
-    decay[0, 0] = np.exp(-dt/t2)
-    decay[1, 1] = np.exp(-dt/t2)
-    decay[2, 2] = np.exp(-dt/t1)
-
-    recov = np.zeros((3,), dtype=dtype)
+    recov = np.zeros((3,), dtype='float64')
     recov[2] = 1 - np.exp(-dt/t1)
 
-    return decay, recov
+    return recov
 
 
-def rotmat_around_arbitrary_axis(rotax, th, dtype='float32'):
+@nb.jit(nb.float64[:, :](nb.float64[:], nb.float64), nopython=True)
+def get_rotmat_around_arbitrary_axis(rotax, th):
     """Returns rotation matrix around an arbitrary axis.
 
     Args:
         rotax (list): (3,) rotation axis
         th (float): angle in radian
-        dtype (str): dtype of real type ('float32', 'float64', ...)
 
     Returns:
         numpy array: (3, 3) rotation matrix
@@ -318,7 +291,7 @@ def rotmat_around_arbitrary_axis(rotax, th, dtype='float32'):
         - See http://scipp.ucsc.edu/~haber/ph216/rotation_12.pdf
     """
 
-    rotmat = np.zeros((3, 3), dtype=dtype)
+    rotmat = np.zeros((3, 3), dtype='float64')
     n = rotax / np.linalg.norm(rotax)
 
     rotmat[0, 0] = np.cos(th) + n[0]*n[0]*(1 - np.cos(th))
@@ -334,3 +307,83 @@ def rotmat_around_arbitrary_axis(rotax, th, dtype='float32'):
     rotmat[2, 2] = np.cos(th) + n[2]*n[2]*(1 - np.cos(th))
 
     return rotmat
+
+
+@nb.jit(nb.types.Tuple((nb.float64[:], nb.float64[:, :], nb.float64[:]))(
+        nb.complex128,     # b1_t
+        nb.float64[:],     # g_t
+        nb.float64,        # dt_t
+        nb.float64[:],     # r_t
+        nb.float64,        # df
+        nb.float64,        # t1
+        nb.float64,        # t2
+        nb.float64,        # gamma
+        nb.float64[:],     # m
+        nb.float64[:, :],  # a0
+        nb.float64[:],     # b0
+        ),
+        nopython=True)
+def blochsim_t(
+    b1_t,
+    g_t,
+    dt_t,
+    r_t,
+    df,
+    t1,
+    t2,
+    gamma,
+    m,
+    a0,
+    b0,
+):
+    """Bloch simulator at instant t.
+
+    Args:
+        b1_t (complex): b1 in G, can be complex
+        g_t (`ndarray`): (3,) gradient amplitude in G/cm (x,y,z)
+        dt_t (float): time-step in sec
+        r_t (`ndarray`): (3,) position vector in cm (x,y,z)
+        df (float): off-resonance in Hz
+        t1 (float): T1 in sec
+        t2 (float): T2 in sec
+        gamma (float): gyromagnetic ratio over 2*PI in Hz/G
+        m (`ndarray`): initial magnetization vector (x,y,z)
+        a0 (`ndarray`): (3, 3) initial propagation matrix
+        b0 (`ndarray`): (3,) initial propagation vector
+
+    Returns:
+        tuple: m, a, b
+    """
+
+    # rotation due to RF pulse, gradient, and off-resonance
+
+    rotang_x, rotang_y = rotang_b1(b1_t, dt_t, gamma)
+    rotang_z = rotang_offres(g_t, r_t, df, dt_t, gamma)
+
+    # convert rotation angles to rotation around arbitrary axis
+
+    rotax = np.array([rotang_x, rotang_y, rotang_z], dtype='float64')
+    rotang = np.linalg.norm(rotax)
+
+    if abs(rotang) < 1e-6:
+        rotmat = eye_f8(3)
+    else:
+        rotmat = get_rotmat_around_arbitrary_axis(rotax, rotang)
+        m = np.dot(rotmat, m)
+
+    # T1, T2 decay and T1 recovery
+
+    decay = get_decay_matrix(t1, t2, dt_t)
+    recov = get_recovery_vector(t1, t2, dt_t)
+
+    m = np.dot(decay, m) + recov
+
+    # update propagation equation
+
+    # a = np.linalg.multi_dot([decay, rotmat, a0])
+    # b = np.linalg.multi_dot([decay, rotmat, b0]) + recov
+    decay_and_rotate = np.dot(decay, rotmat)
+    a = np.dot(decay_and_rotate, a0)
+    b = np.dot(decay_and_rotate, b0) + recov
+
+    return m, a, b
