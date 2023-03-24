@@ -29,15 +29,15 @@ def blochsim(
     """Bloch simulator
 
     Args:
-        b1 (list): (n,) RF pulse in G, can be complex
-        g (list): (n, 3) gradient amplitude in G/cm (x,y,z)
-        dt (list): (n,) time steps in sec
-        r (list): (n, 3) (or (3,) if static) position vector in cm (x,y,z)
+        b1 (list | `ndarray`): (n,) RF pulse in G, can be complex
+        g (list | `ndarray`): (n, 3) gradient amplitude in G/cm (x,y,z)
+        dt (list | `ndarray`): (n,) time steps in sec
+        r (list | `ndarray`): (n, 3) (or (3,)) position vector in cm (x,y,z)
         df (float): off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
-        m0 (list): (3,) initial magnetization vector (x,y,z)
+        m0 (list | `ndarray`): (3,) initial magnetization vector (x,y,z)
         is_static (bool): static or moving object
         precision (str): 'single' or 'double'
 
@@ -98,16 +98,16 @@ def blochsim_const_flow(
     """Bloch simulator
 
     Args:
-        b1 (list): (n,) RF pulse in G, can be complex
-        g (list): (n, 3) gradient amplitude in G/cm (x,y,z)
-        dt (list): (n,) time steps in sec
-        r0 (list): (3,) initial position vector in cm (x,y,z)
-        v (list): (3,) velocity vector in cm/sec (x,y,z)
+        b1 (list | `ndarray`): (n,) RF pulse in G, can be complex
+        g (list | `ndarray`): (n, 3) gradient amplitude in G/cm (x,y,z)
+        dt (list | `ndarray`): (n,) time steps in sec
+        r0 (list | `ndarray`): (3,) initial position vector in cm (x,y,z)
+        v (list | `ndarray`): (3,) velocity vector in cm/sec (x,y,z)
         df (float): off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
-        m0 (list): (3,) initial magnetization vector (x,y,z)
+        m0 (list | `ndarray`): (3,) initial magnetization vector (x,y,z)
         ignore_flow (None | list): ignore the flow at instances
         precision (str): 'single' or 'double'
 
@@ -169,17 +169,17 @@ def blochsim_const_acc(
     """Bloch simulator
 
     Args:
-        b1 (list): (n,) RF pulse in G, can be complex
-        g (list): (n, 3) gradient amplitude in G/cm (x,y,z)
-        dt (list): (n,) time steps in sec
-        r0 (list): (3,) initial position vector in cm (x,y,z)
-        v0 (list): (3,) initial velocity vector in cm/sec (x,y,z)
-        acc (list): (3,) constant acceleration vector in cm/sec (x,y,z)
+        b1 (list | `ndarray`): (n,) RF pulse in G, can be complex
+        g (list) | `ndarray`: (n, 3) gradient amplitude in G/cm (x,y,z)
+        dt (list | `ndarray`): (n,) time steps in sec
+        r0 (list | `ndarray`): (3,) initial position vector in cm (x,y,z)
+        v0 (list | `ndarray`): (3,) initial velocity vector in cm/sec (x,y,z)
+        acc (list | `ndarray`): (3,) constant acceleration vector in cm/sec^2
         df (float): off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
-        m0 (list): (3,) initial magnetization vector (x,y,z)
+        m0 (list | `ndarray`): (3,) initial magnetization vector (x,y,z)
         ignore_flow (None | list): ignore the flow at instances
         precision (str): 'single' or 'double'
 
@@ -227,6 +227,7 @@ def blochsim_const_acc(
 
 @nb.jit(nb.float64[:, :](nb.int64), nopython=True)
 def eye_f8(n):
+    """numpy.identity() (double)."""
     out = np.zeros((n, n), dtype='float64')
     for i in range(n):
         out[i, i] = 1
@@ -235,6 +236,7 @@ def eye_f8(n):
 
 @nb.jit(nb.float32[:, :](nb.int64), nopython=True)
 def eye_f4(n):
+    """numpy.identity() (single)."""
     out = np.zeros((n, n), dtype='float32')
     for i in range(n):
         out[i, i] = 1
@@ -245,11 +247,11 @@ def eye_f4(n):
                    nb.float64),
         nopython=True)
 def rotang_offres_64(g, r, df, dt, gamma):
-    """Returns rotation angle around z-axis due to off-resonance.
+    """Returns rotation angle around z-axis due to off-resonance (double).
 
     Args:
-        g (list): (3,) gradient amplitude in G/cm
-        r (list): (3,) position vector in cm
+        g (`ndarray`): (3,) gradient amplitude in G/cm
+        r (`ndarray`): (3,) position vector in cm
         df (float): off-resonance in Hz
         dt (float): time-step in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
@@ -270,11 +272,11 @@ def rotang_offres_64(g, r, df, dt, gamma):
                    nb.float32),
         nopython=True)
 def rotang_offres_32(g, r, df, dt, gamma):
-    """Returns rotation angle around z-axis due to off-resonance.
+    """Returns rotation angle around z-axis due to off-resonance (single).
 
     Args:
-        g (list): (3,) gradient amplitude in G/cm
-        r (list): (3,) position vector in cm
+        g (`ndarray`): (3,) gradient amplitude in G/cm
+        r (`ndarray`): (3,) position vector in cm
         df (float): off-resonance in Hz
         dt (float): time-step in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
@@ -296,7 +298,7 @@ def rotang_offres_32(g, r, df, dt, gamma):
     nopython=True
 )
 def rotang_b1_64(b1, dt, gamma):
-    """Returns rotation angles around x- and y-axis due to b1
+    """Returns rotation angles around x- and y-axis due to b1 (double).
 
     Args:
         b1 (complex): RF waveform in Gauss, can be complex
@@ -321,7 +323,7 @@ def rotang_b1_64(b1, dt, gamma):
     nopython=True
 )
 def rotang_b1_32(b1, dt, gamma):
-    """Returns rotation angles around x- and y-axis due to b1
+    """Returns rotation angles around x- and y-axis due to b1 (single).
 
     Args:
         b1 (complex): RF waveform in Gauss, can be complex
@@ -343,7 +345,7 @@ def rotang_b1_32(b1, dt, gamma):
 
 @nb.jit(nb.float64[:, :](nb.float64, nb.float64, nb.float64), nopython=True)
 def get_decay_matrix_64(t1, t2, dt):
-    """Returns decay matrix.
+    """Returns decay matrix (double).
 
     Args:
         t1 (float): T1 in sec
@@ -362,28 +364,9 @@ def get_decay_matrix_64(t1, t2, dt):
     return decay
 
 
-@nb.jit(nb.float64[:](nb.float64, nb.float64, nb.float64), nopython=True)
-def get_recovery_vector_64(t1, t2, dt):
-    """Returns decay matrix and recovery vector.
-
-    Args:
-        t1 (float): T1 in sec
-        t2 (float): T2 in sec
-        dt (float): time-step in sec
-
-    Returns:
-        ndarray: recovery vector (3,)
-    """
-
-    recov = np.zeros((3,), dtype='float64')
-    recov[2] = 1 - np.exp(-dt/t1)
-
-    return recov
-
-
 @nb.jit(nb.float32[:, :](nb.float32, nb.float32, nb.float32), nopython=True)
 def get_decay_matrix_32(t1, t2, dt):
-    """Returns decay matrix.
+    """Returns decay matrix (single).
 
     Args:
         t1 (float): T1 in sec
@@ -402,16 +385,54 @@ def get_decay_matrix_32(t1, t2, dt):
     return decay
 
 
-@nb.jit(nb.float64[:, :](nb.float64[:], nb.float64), nopython=True)
-def get_rotmat_around_arbitrary_axis_64(rotax, th):
-    """Returns rotation matrix around an arbitrary axis.
+@nb.jit(nb.float64[:](nb.float64, nb.float64, nb.float64), nopython=True)
+def get_recovery_vector_64(t1, t2, dt):
+    """Returns recovery vector (double).
 
     Args:
-        rotax (list): (3,) rotation axis
+        t1 (float): T1 in sec
+        t2 (float): T2 in sec
+        dt (float): time-step in sec
+
+    Returns:
+        ndarray: recovery vector (3,)
+    """
+
+    recov = np.zeros((3,), dtype='float64')
+    recov[2] = 1 - np.exp(-dt/t1)
+
+    return recov
+
+
+@nb.jit(nb.float32[:](nb.float32, nb.float32, nb.float32), nopython=True)
+def get_recovery_vector_32(t1, t2, dt):
+    """Returns recovery vector (single).
+
+    Args:
+        t1 (float): T1 in sec
+        t2 (float): T2 in sec
+        dt (float): time-step in sec
+
+    Returns:
+        `ndarray`: recovery vector (3,)
+    """
+
+    recov = np.zeros((3,), dtype='float32')
+    recov[2] = 1 - np.exp(-dt/t1)
+
+    return recov
+
+
+@nb.jit(nb.float64[:, :](nb.float64[:], nb.float64), nopython=True)
+def get_rotmat_around_arbitrary_axis_64(rotax, th):
+    """Returns rotation matrix around an arbitrary axis (double).
+
+    Args:
+        rotax (`ndarray`): (3,) rotation axis
         th (float): angle in radian
 
     Returns:
-        numpy array: (3, 3) rotation matrix
+        `ndarray`: (3, 3) rotation matrix
 
     Notes:
         - See http://scipp.ucsc.edu/~haber/ph216/rotation_12.pdf
@@ -437,14 +458,14 @@ def get_rotmat_around_arbitrary_axis_64(rotax, th):
 
 @nb.jit(nb.float32[:, :](nb.float32[:], nb.float32), nopython=True)
 def get_rotmat_around_arbitrary_axis_32(rotax, th):
-    """Returns rotation matrix around an arbitrary axis.
+    """Returns rotation matrix around an arbitrary axis (single).
 
     Args:
-        rotax (list): (3,) rotation axis
+        rotax (`ndarray`): (3,) rotation axis
         th (float): angle in radian
 
     Returns:
-        numpy array: (3, 3) rotation matrix
+        `ndarray`: (3, 3) rotation matrix
 
     Notes:
         - See http://scipp.ucsc.edu/~haber/ph216/rotation_12.pdf
@@ -466,25 +487,6 @@ def get_rotmat_around_arbitrary_axis_32(rotax, th):
     rotmat[2, 2] = np.cos(th) + n[2]*n[2]*(1 - np.cos(th))
 
     return rotmat
-
-
-@nb.jit(nb.float32[:](nb.float32, nb.float32, nb.float32), nopython=True)
-def get_recovery_vector_32(t1, t2, dt):
-    """Returns decay matrix and recovery vector.
-
-    Args:
-        t1 (float): T1 in sec
-        t2 (float): T2 in sec
-        dt (float): time-step in sec
-
-    Returns:
-        ndarray: recovery vector (3,)
-    """
-
-    recov = np.zeros((3,), dtype='float32')
-    recov[2] = 1 - np.exp(-dt/t1)
-
-    return recov
 
 
 @nb.jit(nb.types.Tuple((nb.float64[:], nb.float64[:, :], nb.float64[:]))(
@@ -514,7 +516,7 @@ def blochsim_t_64(
     a0,
     b0,
 ):
-    """Bloch simulator at instant t.
+    """Bloch simulator at instant t (double).
 
     Args:
         b1_t (complex): b1 in G, can be complex
@@ -594,7 +596,7 @@ def blochsim_t_32(
     a0,
     b0,
 ):
-    """Bloch simulator at instant t.
+    """Bloch simulator at instant t (single).
 
     Args:
         b1_t (complex): b1 in G, can be complex

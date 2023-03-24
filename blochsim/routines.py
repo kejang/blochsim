@@ -8,7 +8,7 @@ def estimate_inversion_time(
     time_res=1e-4,
     df=0,
     r=[0, 0, 0],
-    dtype='float32',
+    precision='single'
 ):
     """Estimate Inversion Time (TI).
 
@@ -17,8 +17,8 @@ def estimate_inversion_time(
         t2 (float): T2 in sec
         time_res (float): time resolution in sec
         df (float): off-resonance in Hz
-        r (list): 3 by 1 Cartesian coordinate in cm
-        dtype (str): dtype of real type ('float32', 'float64', ...)
+        r (list | `ndarray`): 3 by 1 Cartesian coordinate in cm
+        precision (str): 'single' or 'double'
 
     Returns:
         float: inversion time in sec
@@ -32,10 +32,14 @@ def estimate_inversion_time(
         df=df,
         t1=t1,
         t2=t2,
-        dtype=dtype,
+        precision=precision,
     )
 
-    m = np.array([0, 0, -1], dtype='float32')
+    if precision == 'double':
+        m = np.array([0, 0, -1], dtype='float64')
+    else:
+        m = np.array([0, 0, -1], dtype='float32')
+
     ti = 0
     while m[-1] < 0:
         m = np.matmul(a, m) + b
