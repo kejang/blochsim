@@ -50,7 +50,7 @@ def blochsim(
         else:
             r_t = r[i]
 
-        m, a, b = blochsim_t(
+        m, a, b = blochsim_t_64(
             b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
 
@@ -106,7 +106,7 @@ def blochsim_const_flow(
     ms = []
 
     for i in range(len(b1)):
-        m, a, b = blochsim_t(
+        m, a, b = blochsim_t_64(
             b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
         ms.append(m)
@@ -167,7 +167,7 @@ def blochsim_const_acc(
     ms = []
 
     for i in range(len(b1)):
-        m, a, b = blochsim_t(
+        m, a, b = blochsim_t_64(
             b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
         )
         ms.append(m)
@@ -189,7 +189,7 @@ def eye_f8(n):
 @nb.jit(nb.float64(nb.float64[:], nb.float64[:], nb.float64, nb.float64,
                    nb.float64),
         nopython=True)
-def rotang_offres(g, r, df, dt, gamma):
+def rotang_offres_64(g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance.
 
     Args:
@@ -215,7 +215,7 @@ def rotang_offres(g, r, df, dt, gamma):
     nb.types.UniTuple(nb.float64, 2)(nb.complex128, nb.float64, nb.float64),
     nopython=True
 )
-def rotang_b1(b1, dt, gamma):
+def rotang_b1_64(b1, dt, gamma):
     """Returns rotation angles around x- and y-axis due to b1
 
     Args:
@@ -237,7 +237,7 @@ def rotang_b1(b1, dt, gamma):
 
 
 @nb.jit(nb.float64[:, :](nb.float64, nb.float64, nb.float64), nopython=True)
-def get_decay_matrix(t1, t2, dt):
+def get_decay_matrix_64(t1, t2, dt):
     """Returns decay matrix.
 
     Args:
@@ -258,7 +258,7 @@ def get_decay_matrix(t1, t2, dt):
 
 
 @nb.jit(nb.float64[:](nb.float64, nb.float64, nb.float64), nopython=True)
-def get_recovery_vector(t1, t2, dt):
+def get_recovery_vector_64(t1, t2, dt):
     """Returns decay matrix and recovery vector.
 
     Args:
@@ -277,7 +277,7 @@ def get_recovery_vector(t1, t2, dt):
 
 
 @nb.jit(nb.float64[:, :](nb.float64[:], nb.float64), nopython=True)
-def get_rotmat_around_arbitrary_axis(rotax, th):
+def get_rotmat_around_arbitrary_axis_64(rotax, th):
     """Returns rotation matrix around an arbitrary axis.
 
     Args:
@@ -323,7 +323,7 @@ def get_rotmat_around_arbitrary_axis(rotax, th):
         nb.float64[:],     # b0
         ),
         nopython=True)
-def blochsim_t(
+def blochsim_t_64(
     b1_t,
     g_t,
     dt_t,
@@ -357,8 +357,8 @@ def blochsim_t(
 
     # rotation due to RF pulse, gradient, and off-resonance
 
-    rotang_x, rotang_y = rotang_b1(b1_t, dt_t, gamma)
-    rotang_z = rotang_offres(g_t, r_t, df, dt_t, gamma)
+    rotang_x, rotang_y = rotang_b1_64(b1_t, dt_t, gamma)
+    rotang_z = rotang_offres_64(g_t, r_t, df, dt_t, gamma)
 
     # convert rotation angles to rotation around arbitrary axis
 
@@ -368,13 +368,13 @@ def blochsim_t(
     if abs(rotang) < 1e-6:
         rotmat = eye_f8(3)
     else:
-        rotmat = get_rotmat_around_arbitrary_axis(rotax, rotang)
+        rotmat = get_rotmat_around_arbitrary_axis_64(rotax, rotang)
         m = np.dot(rotmat, m)
 
     # T1, T2 decay and T1 recovery
 
-    decay = get_decay_matrix(t1, t2, dt_t)
-    recov = get_recovery_vector(t1, t2, dt_t)
+    decay = get_decay_matrix_64(t1, t2, dt_t)
+    recov = get_recovery_vector_64(t1, t2, dt_t)
 
     m = np.dot(decay, m) + recov
 
