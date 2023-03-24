@@ -22,7 +22,8 @@ def get_hard_pulse(
     flip_ang,
     RF_UPDATE_TIME=2,
     multiple_of_n=4,
-    gamma=4257.58
+    gamma=4257.58,
+    dtype='float32'
 ):
     """Returns a Hard pulse.
 
@@ -32,21 +33,19 @@ def get_hard_pulse(
         RF_UPDATE_TIME (int or float): dt in us
         multiple_of_n (int): constraint in length, like 2 or 4
         gamma (float): gyromagnetic ratio in Hz/G
+        dtype (str): dtype of real type ('float32', 'float64', ...)
 
     Returns:
         numpy array: hard pulse scaled to Gauss
 
-    Notes: 
+    Notes:
         - See John Pauly's rftools
     """
 
-    n = flip_ang/b1_max/(2*np.pi*gamma*1e-3)/(RF_UPDATE_TIME/1000) + 2
-    n = int(n/multiple_of_n + 0.5)*multiple_of_n
+    n = flip_ang/b1_max/(2*np.pi*gamma*1e-3)/(RF_UPDATE_TIME/1000)
+    n = int((n + multiple_of_n - 1)/multiple_of_n)*multiple_of_n
 
-    rf = np.ones(n)
-    rf[0] = 0
-    rf[-1] = 0
-
+    rf = np.ones(n, dtype=dtype)
     rf = rf/np.sum(rf)*flip_ang
 
     return rfscaleg(rf, n*RF_UPDATE_TIME/1000)

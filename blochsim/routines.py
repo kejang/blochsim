@@ -7,7 +7,8 @@ def estimate_inversion_time(
     t2,
     time_res=1e-4,
     df=0,
-    r=[0, 0, 0]
+    r=[0, 0, 0],
+    dtype='float32',
 ):
     """Estimate Inversion Time (TI).
 
@@ -17,9 +18,10 @@ def estimate_inversion_time(
         time_res (float): time resolution in sec
         df (float): off-resonance in Hz
         r (list): 3 by 1 Cartesian coordinate in cm
+        dtype (str): dtype of real type ('float32', 'float64', ...)
 
     Returns:
-        float: inversion time in sec    
+        float: inversion time in sec
     """
 
     _, a, b = blochsim(
@@ -29,7 +31,8 @@ def estimate_inversion_time(
         r=r,
         df=df,
         t1=t1,
-        t2=t2
+        t2=t2,
+        dtype=dtype,
     )
 
     m = np.array([0, 0, -1], dtype='float32')
