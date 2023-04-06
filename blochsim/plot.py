@@ -60,6 +60,27 @@ def plot_m_3d(fig,
                 linestyle='dashed',
                 linewidth=linewidth*0.25)
 
+    # draw x, y, z axis
+    # in old matplotlib, quiver is broken for negative values
+
+    ax.quiver([0], [0], [0], [1], [0], [0],
+              color='#A0A0A0',
+              linestyle='dashed',
+              linewidth=linewidth*0.5,
+              arrow_length_ratio=0.05)
+
+    ax.quiver([0], [0], [0], [0], [1], [0],
+              color='#A0A0A0',
+              linestyle='dashed',
+              linewidth=linewidth*0.5,
+              arrow_length_ratio=0.05)
+
+    ax.quiver([0], [0], [0], [0], [0], [1],
+              color='#A0A0A0',
+              linestyle='dashed',
+              linewidth=linewidth*0.5,
+              arrow_length_ratio=0.05)
+
     # plot m
 
     if isinstance(color, list):
