@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
@@ -134,10 +135,14 @@ def plot_m_xy(fig,
         labelsize (int | str): fontsize of legend()
     """
 
-    ax = fig.add_axes([-1, -1, 1, 1])
+    ax = fig.add_subplot(1, 1, 1)
+
     ax.set_xlim([-axis_limit, axis_limit])
     ax.set_ylim([-axis_limit, axis_limit])
-    ax.set_aspect('equal')
+    ax.set_aspect('equal', adjustable='box')
+
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(axis_limit*0.5))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(axis_limit*0.5))
 
     # plot m
 
@@ -181,7 +186,8 @@ def export_to_image_3d(ms_and_ind,
                        linewidth=1.0,
                        label=None,
                        labelloc='upper right',
-                       labelsize='xx-small'):
+                       labelsize='xx-small',
+                       extension='png'):
     """Export m/m0 in 3D space to a png image.
 
     Args:
@@ -200,7 +206,8 @@ def export_to_image_3d(ms_and_ind,
         linewidth (int): linewidth
         label (None | list): labels of m
         labelloc (str): label location
-        labelsize (int | str): fontsize of legend().
+        labelsize (int | str): fontsize of legend()
+        extension (str): image file extension
     """
 
     ms, ind = ms_and_ind
@@ -219,9 +226,9 @@ def export_to_image_3d(ms_and_ind,
               labelsize=labelsize)
 
     if prefix:
-        fn = prefix + '-' + str(ind).zfill(n_digit) + '.png'
+        fn = prefix + '-' + str(ind).zfill(n_digit) + '.' + extension
     else:
-        fn = str(ind).zfill(n_digit) + '.png'
+        fn = str(ind).zfill(n_digit) + '.' + extension
 
     filepath = Path(target_dir).joinpath(fn)
 
@@ -249,7 +256,8 @@ def export_to_image_xy(ms_and_ind,
                        linewidth=1.0,
                        label=None,
                        labelloc='upper right',
-                       labelsize='xx-small'):
+                       labelsize='xx-small',
+                       extension='png'):
     """Export m/m0 on XY plane to a png image.
 
     Args:
@@ -269,6 +277,7 @@ def export_to_image_xy(ms_and_ind,
         label (None | list): labels of m
         labelloc (str): label location
         labelsize (int | str): fontsize of legend().
+        extension (str): image file extension
     """
 
     ms, ind = ms_and_ind
@@ -287,9 +296,9 @@ def export_to_image_xy(ms_and_ind,
               labelsize=labelsize)
 
     if prefix:
-        fn = prefix + '-' + str(ind).zfill(n_digit) + '.png'
+        fn = prefix + '-' + str(ind).zfill(n_digit) + '.' + extension
     else:
-        fn = str(ind).zfill(n_digit) + '.png'
+        fn = str(ind).zfill(n_digit) + '.' + extension
 
     filepath = Path(target_dir).joinpath(fn)
 
@@ -316,7 +325,8 @@ def export_to_images_3d(target_dir,
                         max_workers=1,
                         label=None,
                         labelloc='upper right',
-                        labelsize='xx-small'):
+                        labelsize='xx-small',
+                        extension='png'):
     """Export a series of m/m0 in 3D space to png images.
 
     Args:
@@ -338,6 +348,7 @@ def export_to_images_3d(target_dir,
         label (None | list): labels of m
         labelloc (str): label location
         labelsize (int | str): fontsize of legend().
+        extension (str): image file extension
     """
 
     n_sample = len(ms_list[0])
@@ -356,7 +367,8 @@ def export_to_images_3d(target_dir,
                    linewidth=linewidth,
                    label=label,
                    labelloc=labelloc,
-                   labelsize=labelsize)
+                   labelsize=labelsize,
+                   extension=extension)
 
     args = [[[], i] for i in range(n_sample)]
     for ms in ms_list:
@@ -384,7 +396,8 @@ def export_to_images_xy(target_dir,
                         max_workers=1,
                         label=None,
                         labelloc='upper right',
-                        labelsize='xx-small'):
+                        labelsize='xx-small',
+                        extension='png'):
     """Export a series of m/m0 on XY plane to png images.
 
     Args:
@@ -406,6 +419,7 @@ def export_to_images_xy(target_dir,
         label (None | list): labels of m
         labelloc (str): label location
         labelsize (int | str): fontsize of legend().
+        extension (str): image file extension
     """
 
     n_sample = len(ms_list[0])
@@ -424,7 +438,8 @@ def export_to_images_xy(target_dir,
                    linewidth=linewidth,
                    label=label,
                    labelloc=labelloc,
-                   labelsize=labelsize)
+                   labelsize=labelsize,
+                   extension=extension)
 
     args = [[[], i] for i in range(n_sample)]
     for ms in ms_list:
