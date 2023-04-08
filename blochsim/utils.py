@@ -53,3 +53,36 @@ def get_hard_pulse(
     rf = rf/np.sum(rf)*flip_ang
 
     return rfscaleg(rf, n*RF_UPDATE_TIME/1000)
+
+
+def design_hyperbolic_secant_pulse(b1_max, dur, tbw, beta, RF_UPDATE_TIME=2):
+    """Design Adiabatic Full-passage Pulse (Hyperbolic Secant Pulse)
+
+    Args:
+        b1_max (float): maximum rf amplitude in G
+        dur (float): duration in ms
+        tbw (float): time-bandwidth
+        beta (float): beta (see Bernstein (6.34))
+        RF_UPDATE_TIME (int): time interval in us
+
+    Returns:
+        `ndarray`: complex HS pulse
+        `ndarray`: amplitude of HS pulse
+        `ndarray`: phase of HS pulse
+
+    Notes:
+        df = mu*beta/pi in (6.42), so once tbw is determined, either one of
+        beta and mu should be fixed. Here beta is given, and mu is determined
+        using (6.42) in Bernstein:
+            mu = pi/beta * (tbw / (dur * 1e-3))
+    """
+
+    n = int(2*np.round(0.5 * dur * 1e3 / RF_UPDATE_TIME))
+    t = np.linspace(-0.5*dur*1e-3, 0.5*dur*1e-3, n + 1, endpoint=True)[1:]
+
+    b1_rho = b1_max / np.cosh(beta * t)                              # (6.36)
+    mu = np.pi/beta * (tbw / (dur * 1e-3))                           # (6.42)
+    b1_phs = mu * -np.log(np.cosh(beta * t)) + mu * np.log(b1_max)   # (6.37)
+    b1 = b1_rho * np.exp(1j * b1_phs)                                # (6.35)
+
+    return b1, b1_rho, b1_phs
