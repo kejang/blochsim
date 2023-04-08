@@ -128,3 +128,47 @@ def get_trap_given_area(
     trap *= area/(np.sum(trap)*interval)
 
     return trap, ramp
+
+
+def get_trap_largest(
+    n,
+    gmax=4.0,
+    smax=15.0,
+    min_plateau=2,
+    interval=4,
+    boundary='right',
+    dtype='float32'
+):
+    """Returns the largest trapezoid for given length.
+
+    Args:
+        n (int): length (total number of sampling points) of trapezoid
+        gmax (float): maximum gradient amplitude in G/cm
+        smax (float): maximum gradient slew rate in G/cm/ms
+        min_plateau (int): minimum plateau length
+        interval (int): time interval in us
+        boundary (str): {'right', 'left', 'both'}
+        dtype (str): dtype of ndarray
+
+    Returns:
+        tuple: `ndarray` (trapezoid) and int (length of ramp)
+    """
+    min_ramp = round_up_length(gmax / (smax*1e-3) / interval, interval)
+
+    max_ramp_raw = (n - min_plateau)/2
+    max_ramp = round_up_length(max_ramp_raw, interval)
+
+    while (min_plateau + 2*max_ramp > n):
+        max_ramp_raw -= 0.5
+        max_ramp = round_up_length(max_ramp_raw, interval)
+
+    if min_ramp < max_ramp:
+        amp = gmax
+        ramp = min_ramp
+        plateau = n - 2*ramp
+    else:
+        amp = (smax*1e-3)*max_ramp*interval
+        ramp = max_ramp
+        plateau = n - 2*ramp
+
+    return get_trap(amp, ramp, plateau, boundary, dtype), ramp
