@@ -146,7 +146,7 @@ def blochsim_const_flow(
         ms[i] = m
 
         if (ignore_flow is None) or (not ignore_flow[i]):
-            r_t += dt[i]*v_c
+            r_t += dt[i] * v_c
 
     return ms, a, b
 
@@ -220,7 +220,7 @@ def blochsim_const_acc(
         ms[i] = m
 
         if (ignore_flow is None) or (not ignore_flow[i]):
-            r_t += v0*dt[i] + 0.5*a0*(dt[i]**2)
+            r_t += v0 * dt[i] + 0.5 * a0 * (dt[i] ** 2)
 
     return ms, a, b
 
@@ -262,7 +262,7 @@ def rotang_offres_64(g, r, df, dt, gamma):
 
     rotang = ((-1)                               # left-hand rotation
               * dt                               # time step
-              * (gamma * np.sum(g*r) + df)       # gradient and off-res
+              * (gamma * np.sum(g * r) + df)     # gradient and off-res
               * 2.0 * np.pi)                     # Hz -> radian
 
     return rotang
@@ -287,7 +287,7 @@ def rotang_offres_32(g, r, df, dt, gamma):
 
     rotang = ((-1)                               # left-hand rotation
               * dt                               # time step
-              * (gamma * np.sum(g*r) + df)       # gradient and off-res
+              * (gamma * np.sum(g * r) + df)     # gradient and off-res
               * 2.0 * np.pi)                     # Hz -> radian
 
     return rotang
@@ -357,9 +357,9 @@ def get_decay_matrix_64(t1, t2, dt):
     """
 
     decay = np.zeros((3, 3), dtype='float64')
-    decay[0, 0] = np.exp(-dt/t2)
-    decay[1, 1] = np.exp(-dt/t2)
-    decay[2, 2] = np.exp(-dt/t1)
+    decay[0, 0] = np.exp(-dt / t2)
+    decay[1, 1] = np.exp(-dt / t2)
+    decay[2, 2] = np.exp(-dt / t1)
 
     return decay
 
@@ -378,9 +378,9 @@ def get_decay_matrix_32(t1, t2, dt):
     """
 
     decay = np.zeros((3, 3), dtype='float32')
-    decay[0, 0] = np.exp(-dt/t2)
-    decay[1, 1] = np.exp(-dt/t2)
-    decay[2, 2] = np.exp(-dt/t1)
+    decay[0, 0] = np.exp(-dt / t2)
+    decay[1, 1] = np.exp(-dt / t2)
+    decay[2, 2] = np.exp(-dt / t1)
 
     return decay
 
@@ -399,7 +399,7 @@ def get_recovery_vector_64(t1, t2, dt):
     """
 
     recov = np.zeros((3,), dtype='float64')
-    recov[2] = 1 - np.exp(-dt/t1)
+    recov[2] = 1 - np.exp(-dt / t1)
 
     return recov
 
@@ -418,7 +418,7 @@ def get_recovery_vector_32(t1, t2, dt):
     """
 
     recov = np.zeros((3,), dtype='float32')
-    recov[2] = 1 - np.exp(-dt/t1)
+    recov[2] = 1 - np.exp(-dt / t1)
 
     return recov
 
@@ -441,17 +441,17 @@ def get_rotmat_around_arbitrary_axis_64(rotax, th):
     rotmat = np.zeros((3, 3), dtype='float64')
     n = rotax / np.linalg.norm(rotax)
 
-    rotmat[0, 0] = np.cos(th) + n[0]*n[0]*(1 - np.cos(th))
-    rotmat[1, 0] = n[0]*n[1]*(1 - np.cos(th)) + n[2]*np.sin(th)
-    rotmat[2, 0] = n[0]*n[2]*(1 - np.cos(th)) - n[1]*np.sin(th)
+    rotmat[0, 0] = np.cos(th) + n[0] * n[0] * (1 - np.cos(th))
+    rotmat[1, 0] = n[0] * n[1] * (1 - np.cos(th)) + n[2] * np.sin(th)
+    rotmat[2, 0] = n[0] * n[2] * (1 - np.cos(th)) - n[1] * np.sin(th)
 
-    rotmat[0, 1] = n[0]*n[1]*(1 - np.cos(th)) - n[2]*np.sin(th)
-    rotmat[1, 1] = np.cos(th) + n[1]*n[1]*(1 - np.cos(th))
-    rotmat[2, 1] = n[1]*n[2]*(1 - np.cos(th)) + n[0]*np.sin(th)
+    rotmat[0, 1] = n[0] * n[1] * (1 - np.cos(th)) - n[2] * np.sin(th)
+    rotmat[1, 1] = np.cos(th) + n[1] * n[1] * (1 - np.cos(th))
+    rotmat[2, 1] = n[1] * n[2] * (1 - np.cos(th)) + n[0] * np.sin(th)
 
-    rotmat[0, 2] = n[0]*n[2]*(1 - np.cos(th)) + n[1]*np.sin(th)
-    rotmat[1, 2] = n[1]*n[2]*(1 - np.cos(th)) - n[0]*np.sin(th)
-    rotmat[2, 2] = np.cos(th) + n[2]*n[2]*(1 - np.cos(th))
+    rotmat[0, 2] = n[0] * n[2] * (1 - np.cos(th)) + n[1] * np.sin(th)
+    rotmat[1, 2] = n[1] * n[2] * (1 - np.cos(th)) - n[0] * np.sin(th)
+    rotmat[2, 2] = np.cos(th) + n[2] * n[2] * (1 - np.cos(th))
 
     return rotmat
 
@@ -474,17 +474,17 @@ def get_rotmat_around_arbitrary_axis_32(rotax, th):
     rotmat = np.zeros((3, 3), dtype='float32')
     n = rotax / np.linalg.norm(rotax)
 
-    rotmat[0, 0] = np.cos(th) + n[0]*n[0]*(1 - np.cos(th))
-    rotmat[1, 0] = n[0]*n[1]*(1 - np.cos(th)) + n[2]*np.sin(th)
-    rotmat[2, 0] = n[0]*n[2]*(1 - np.cos(th)) - n[1]*np.sin(th)
+    rotmat[0, 0] = np.cos(th) + n[0] * n[0] * (1 - np.cos(th))
+    rotmat[1, 0] = n[0] * n[1] * (1 - np.cos(th)) + n[2] * np.sin(th)
+    rotmat[2, 0] = n[0] * n[2] * (1 - np.cos(th)) - n[1] * np.sin(th)
 
-    rotmat[0, 1] = n[0]*n[1]*(1 - np.cos(th)) - n[2]*np.sin(th)
-    rotmat[1, 1] = np.cos(th) + n[1]*n[1]*(1 - np.cos(th))
-    rotmat[2, 1] = n[1]*n[2]*(1 - np.cos(th)) + n[0]*np.sin(th)
+    rotmat[0, 1] = n[0] * n[1] * (1 - np.cos(th)) - n[2] * np.sin(th)
+    rotmat[1, 1] = np.cos(th) + n[1] * n[1] * (1 - np.cos(th))
+    rotmat[2, 1] = n[1] * n[2] * (1 - np.cos(th)) + n[0] * np.sin(th)
 
-    rotmat[0, 2] = n[0]*n[2]*(1 - np.cos(th)) + n[1]*np.sin(th)
-    rotmat[1, 2] = n[1]*n[2]*(1 - np.cos(th)) - n[0]*np.sin(th)
-    rotmat[2, 2] = np.cos(th) + n[2]*n[2]*(1 - np.cos(th))
+    rotmat[0, 2] = n[0] * n[2] * (1 - np.cos(th)) + n[1] * np.sin(th)
+    rotmat[1, 2] = n[1] * n[2] * (1 - np.cos(th)) - n[0] * np.sin(th)
+    rotmat[2, 2] = np.cos(th) + n[2] * n[2] * (1 - np.cos(th))
 
     return rotmat
 
