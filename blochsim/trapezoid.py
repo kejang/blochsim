@@ -14,7 +14,7 @@ def get_trap(amp, ramp, plateau, boundary='right', dtype='float32'):
         amp (float): amplitude in G/cm
         ramp (int): length of ramp
         plateau (int): length of plateau
-        boundary (str): {'right', 'left', 'both'}
+        boundary (str): {'right', 'left', 'both', 'neither'}
         dtype (str): dtype of ndarray
 
     Returns:
@@ -27,9 +27,12 @@ def get_trap(amp, ramp, plateau, boundary='right', dtype='float32'):
     elif boundary == 'left':
         attack = np.linspace(0, amp, ramp, endpoint=False)
         decay = (np.linspace(0, amp, ramp + 1, endpoint=True)[1:])[::-1]
-    else:    # both
+    elif boundary == 'both':
         attack = np.linspace(0, amp, ramp, endpoint=False)
-        decay = np.linspace(0, amp, ramp, endpoint=False)[::-1]
+        decay = attack[::-1]
+    else:    # neither
+        attack = np.linspace(0, amp, ramp + 1, endpoint=False)[1:]
+        decay = attack[::-1]
 
     trap = np.concatenate(
         [attack,
@@ -103,7 +106,7 @@ def get_trap_given_area(
         gmax (float): maximum gradient amplitude in G/cm
         smax (float): maximum gradient slew rate in G/cm/ms
         interval (int): time interval in us
-        boundary (str): {'right', 'left', 'both'}
+        boundary (str): {'right', 'left', 'both', 'neither'}
         dtype (str): dtype of ndarray
         round_n (int): round up ramp length to multiple of this number
 
