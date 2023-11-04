@@ -1,20 +1,22 @@
 import numpy as np
+from numpy import ndarray
 
 
-def rfscaleg(rf, t, gamma=4257.58):
-    """Convert scaled rf to that in Gauss.
+def rfscaleg(rf: ndarray, t: float, gamma: float = 4257.58) -> ndarray:
+    """
+    Scales RF pulse to units of Gauss. sum(input rf) == flip angle in radian.
 
     Args:
-        rf (`ndarray`): scaled rf waveform (sum(rf) = flip angle)
-        t (float): duration of RF pulse in ms
-        gamma (float): gyromagnetic ratio in Hz/G
+        rf (ndarray): scaled RF waveform
+        t (float): Duration of the RF pulse in milliseconds.
+        gamma (float): Gyromagnetic ratio in Hz/G.
 
     Returns:
-        numpy array: rf waveform scaled to Gauss
+        ndarray: RF waveform scaled to Gauss.
     """
 
     dt = t / rf.size
-    return rf / (2 * np.pi * gamma * 1e-3 * dt)
+    return rf / (2 * np.pi * gamma * dt * 1e-3)
 
 
 def get_hard_pulse(

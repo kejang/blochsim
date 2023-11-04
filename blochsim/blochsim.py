@@ -33,7 +33,7 @@ def blochsim(
         g (list | `ndarray`): (n, 3) gradient amplitude in G/cm (x,y,z)
         dt (list | `ndarray`): (n,) time steps in sec
         r (list | `ndarray`): (n, 3) (or (3,)) position vector in cm (x,y,z)
-        df (float): off-resonance in Hz
+        df (list | `ndarray`): (n,) off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
@@ -52,6 +52,7 @@ def blochsim(
         b1 = np.array(b1, dtype='complex128')
         g = np.array(g, dtype='float64')
         r = np.array(r, dtype='float64')
+        df = np.array(df, dtype='float64')
         m = np.array(m0, dtype='float64')
         a = np.eye(3, dtype='float64')
         b = np.zeros((3,), dtype='float64')
@@ -61,6 +62,7 @@ def blochsim(
         b1 = np.array(b1, dtype='complex64')
         g = np.array(g, dtype='float32')
         r = np.array(r, dtype='float32')
+        df = np.array(df, dtype='float32')
         m = np.array(m0, dtype='float32')
         a = np.eye(3, dtype='float32')
         b = np.zeros((3,), dtype='float32')
@@ -73,7 +75,7 @@ def blochsim(
             r_t = r[i]
 
         m, a, b = blochsim_t(
-            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
+            b1[i], g[i], dt[i], r_t, df[i], t1, t2, gamma, m, a, b
         )
 
         ms[i] = m
@@ -103,7 +105,7 @@ def blochsim_const_flow(
         dt (list | `ndarray`): (n,) time steps in sec
         r0 (list | `ndarray`): (3,) initial position vector in cm (x,y,z)
         v (list | `ndarray`): (3,) velocity vector in cm/sec (x,y,z)
-        df (float): off-resonance in Hz
+        df (list | `ndarray`): (n,) off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
@@ -121,6 +123,7 @@ def blochsim_const_flow(
         ms = np.zeros((n, 3), dtype='float64')
         b1 = np.array(b1, dtype='complex128')
         g = np.array(g, dtype='float64')
+        df = np.array(df, dtype='float64')
         r_t = np.array(r0, dtype='float64')
         v_c = np.array(v, dtype='float64')
         m = np.array(m0, dtype='float64')
@@ -131,6 +134,7 @@ def blochsim_const_flow(
         ms = np.zeros((n, 3), dtype='float32')
         b1 = np.array(b1, dtype='complex64')
         g = np.array(g, dtype='float32')
+        df = np.array(df, dtype='float32')
         r_t = np.array(r0, dtype='float32')
         v_c = np.array(v, dtype='float32')
         m = np.array(m0, dtype='float32')
@@ -140,7 +144,7 @@ def blochsim_const_flow(
 
     for i in range(len(b1)):
         m, a, b = blochsim_t(
-            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
+            b1[i], g[i], dt[i], r_t, df[i], t1, t2, gamma, m, a, b
         )
 
         ms[i] = m
@@ -175,7 +179,7 @@ def blochsim_const_acc(
         r0 (list | `ndarray`): (3,) initial position vector in cm (x,y,z)
         v0 (list | `ndarray`): (3,) initial velocity vector in cm/sec (x,y,z)
         acc (list | `ndarray`): (3,) constant acceleration vector in cm/sec^2
-        df (float): off-resonance in Hz
+        df (list | `ndarray`): (n,) off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
@@ -193,6 +197,7 @@ def blochsim_const_acc(
         ms = np.zeros((n, 3), dtype='float64')
         b1 = np.array(b1, dtype='complex128')
         g = np.array(g, dtype='float64')
+        df = np.array(df, dtype='float64')
         r_t = np.array(r0, dtype='float64')
         v0 = np.array(v0, dtype='float64')
         a0 = np.array(acc, dtype='float64')
@@ -204,6 +209,7 @@ def blochsim_const_acc(
         ms = np.zeros((n, 3), dtype='float32')
         b1 = np.array(b1, dtype='complex64')
         g = np.array(g, dtype='float32')
+        df = np.array(df, dtype='float32')
         r_t = np.array(r0, dtype='float32')
         v0 = np.array(v0, dtype='float32')
         a0 = np.array(acc, dtype='float32')
@@ -214,7 +220,7 @@ def blochsim_const_acc(
 
     for i in range(len(b1)):
         m, a, b = blochsim_t(
-            b1[i], g[i], dt[i], r_t, df, t1, t2, gamma, m, a, b
+            b1[i], g[i], dt[i], r_t, df[i], t1, t2, gamma, m, a, b
         )
 
         ms[i] = m
@@ -494,7 +500,7 @@ def get_rotmat_around_arbitrary_axis_32(rotax, th):
         nb.float64[:],     # g_t
         nb.float64,        # dt_t
         nb.float64[:],     # r_t
-        nb.float64,        # df
+        nb.float64,        # df_t
         nb.float64,        # t1
         nb.float64,        # t2
         nb.float64,        # gamma
@@ -508,7 +514,7 @@ def blochsim_t_64(
     g_t,
     dt_t,
     r_t,
-    df,
+    df_t,
     t1,
     t2,
     gamma,
@@ -523,7 +529,7 @@ def blochsim_t_64(
         g_t (`ndarray`): (3,) gradient amplitude in G/cm (x,y,z)
         dt_t (float): time-step in sec
         r_t (`ndarray`): (3,) position vector in cm (x,y,z)
-        df (float): off-resonance in Hz
+        df_t (float): off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
@@ -538,7 +544,7 @@ def blochsim_t_64(
     # rotation due to RF pulse, gradient, and off-resonance
 
     rotang_x, rotang_y = rotang_b1_64(b1_t, dt_t, gamma)
-    rotang_z = rotang_offres_64(g_t, r_t, df, dt_t, gamma)
+    rotang_z = rotang_offres_64(g_t, r_t, df_t, dt_t, gamma)
 
     # convert rotation angles to rotation around arbitrary axis
 
@@ -574,7 +580,7 @@ def blochsim_t_64(
         nb.float32[:],     # g_t
         nb.float32,        # dt_t
         nb.float32[:],     # r_t
-        nb.float32,        # df
+        nb.float32,        # df_t
         nb.float32,        # t1
         nb.float32,        # t2
         nb.float32,        # gamma
@@ -588,7 +594,7 @@ def blochsim_t_32(
     g_t,
     dt_t,
     r_t,
-    df,
+    df_t,
     t1,
     t2,
     gamma,
@@ -603,7 +609,7 @@ def blochsim_t_32(
         g_t (`ndarray`): (3,) gradient amplitude in G/cm (x,y,z)
         dt_t (float): time-step in sec
         r_t (`ndarray`): (3,) position vector in cm (x,y,z)
-        df (float): off-resonance in Hz
+        df_t (float): off-resonance in Hz
         t1 (float): T1 in sec
         t2 (float): T2 in sec
         gamma (float): gyromagnetic ratio over 2*PI in Hz/G
@@ -618,7 +624,7 @@ def blochsim_t_32(
     # rotation due to RF pulse, gradient, and off-resonance
 
     rotang_x, rotang_y = rotang_b1_32(b1_t, dt_t, gamma)
-    rotang_z = rotang_offres_32(g_t, r_t, df, dt_t, gamma)
+    rotang_z = rotang_offres_32(g_t, r_t, df_t, dt_t, gamma)
 
     # convert rotation angles to rotation around arbitrary axis
 
