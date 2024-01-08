@@ -198,7 +198,7 @@ def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
 
     # field offset (negative), "Omega = w0 - w"
 
-    offset = -(np.sum(g * r) + df)
+    offset = -(np.sum(g * r) + df / gamma)
 
     # effective B-field
 
@@ -207,8 +207,12 @@ def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
     # prepare rotation of the reference frame
     # (new x-axis is parallel to the effective B-field.)
 
-    s = offset / b_eff    # sin(theta), (1.16)
-    c = b1_amp / b_eff     # cos(theta), (1.16)
+    if np.isclose(b_eff, 0):
+        s = 0
+        c = 1
+    else:
+        s = offset / b_eff    # sin(theta), (1.16)
+        c = b1_amp / b_eff     # cos(theta), (1.16)
 
     # rotation angle in radian
 
@@ -326,7 +330,7 @@ def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
 
     # field offset (negative), "Omega = w0 - w"
 
-    offset = -(np.sum(g * r) + df)
+    offset = -(np.sum(g * r) + df / gamma)
 
     # effective B-field
 
@@ -335,8 +339,12 @@ def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
     # prepare rotation of the reference frame
     # (new x-axis is parallel to the effective B-field.)
 
-    s = offset / b_eff    # sin(theta), (1.16)
-    c = b1_amp / b_eff     # cos(theta), (1.16)
+    if np.isclose(b_eff, 0):
+        s = 0
+        c = 1
+    else:
+        s = offset / b_eff    # sin(theta), (1.16)
+        c = b1_amp / b_eff     # cos(theta), (1.16)
 
     # rotation angle in radian
 
