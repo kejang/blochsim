@@ -169,7 +169,7 @@ def get_recovery_vector_32(t1, t2, dt):
 @nb.jit(nb.float32[:, :](nb.float32, nb.float32, nb.float32[:], nb.float32[:],
                          nb.float32, nb.float32, nb.float32),
         nopython=True)
-def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
+def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance (single).
 
     Args:
@@ -301,7 +301,7 @@ def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
 @nb.jit(nb.float64[:, :](nb.float64, nb.float64, nb.float64[:], nb.float64[:],
                          nb.float64, nb.float64, nb.float64),
         nopython=True)
-def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
+def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance (single).
 
     Args:
@@ -428,6 +428,262 @@ def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
     rotmat = rmtx_z_pos @ rmtx_y_pos @ rmtx @ rmtx_y_neg @ rmtx_z_neg
 
     return rotmat.astype('float64')
+
+
+@nb.jit(nb.float32[:, :](nb.float32, nb.float32, nb.float32[:], nb.float32[:],
+                         nb.float32, nb.float32, nb.float32),
+        nopython=True)
+def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
+    """Returns rotation angle around z-axis due to off-resonance (single).
+
+    Args:
+        b1_amp (float): B1 amplitude in G
+        phi (float): B1 phase in radian
+        g (`ndarray`): (3,) gradient amplitude in G/cm
+        r (`ndarray`): (3,) position vector in cm
+        df (float): off-resonance in Hz
+        dt (float): time-step in sec
+        gamma (float): gyromagnetic ratio over 2*PI in Hz/G
+
+    Returns:
+        `ndarray`: (3, 3)-rotation matrix
+
+    Notes:
+        - Right-hand notation
+        - full matrix: Rz(phase) * (RF pulse rotation matrix) * Rz(-phase)
+        - RF pulse rotation matrix: Ry(theta) * Rx(-w) * Ry(-theta)
+        - Reference: Multidimensional NMR in Liquid by Frank F. M. van de Ven.
+          But in this book, the matrix is Ry(-theta) * Rx(-w) * Ry(theta).
+          (See the equation above 1.16.)
+          I think the matrix should be Ry(theta) * Rx(-w) * Ry(-theta),
+          as implemented in this code, because the left-hand rotation changes
+          the coordinate. (Figure 1.5.)
+    """
+
+    # field offset (negative), "Omega = w0 - w"
+
+    offset = -(np.sum(g * r) + df / gamma)
+
+    # effective B-field
+
+    b_eff = np.sqrt(b1_amp ** 2 + offset ** 2)    # (1.15)
+
+    # prepare rotation of the reference frame
+    # (new x-axis is parallel to the effective B-field.)
+
+    if np.isclose(b_eff, 0):
+        sin_th = 0
+        cos_th = 1
+    else:
+        sin_th = offset / b_eff    # sin(theta), (1.16)
+        cos_th = b1_amp / b_eff     # cos(theta), (1.16)
+
+    # rotation angle in radian
+
+    wt = 2.0 * np.pi * gamma * b_eff * dt
+
+    # rotation matrix
+
+    sin_phi = np.sin(phi)
+    cos_phi = np.cos(phi)
+    sin_wt = np.sin(wt)
+    cos_wt = np.cos(wt)
+
+    rotmat = np.zeros((3, 3), dtype='float32')
+
+    rotmat[0, 0] = (
+        (
+            cos_th ** 2 * cos_phi + sin_th * (
+                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
+            )
+        ) * cos_phi - (
+            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
+        ) * sin_phi
+    )
+
+    rotmat[0, 1] = (
+        (
+            cos_th ** 2 * cos_phi + sin_th * (
+                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
+            )
+        ) * sin_phi + (
+            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
+        ) * cos_phi
+    )
+
+    rotmat[0, 2] = (
+        -cos_th * sin_th * cos_phi
+        + cos_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    )
+
+    rotmat[1, 0] = (
+        (
+            cos_th ** 2 * sin_phi + sin_th * (
+                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
+            )
+        ) * cos_phi - (
+            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
+        ) * sin_phi
+    )
+
+    rotmat[1, 1] = (
+        (
+            cos_th ** 2 * sin_phi + sin_th * (
+                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
+            )
+        ) * sin_phi + (
+            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
+        ) * cos_phi
+    )
+
+    rotmat[1, 2] = (
+        -cos_th * sin_th * sin_phi
+        + cos_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    )
+
+    rotmat[2, 0] = (
+        cos_th * sin_phi * sin_wt
+        + (cos_th * sin_th * cos_wt - cos_th * sin_th) * cos_phi
+    )
+
+    rotmat[2, 1] = (
+        -cos_th * sin_wt * cos_phi
+        + (cos_th * sin_th * cos_wt - cos_th * sin_th) * sin_phi
+    )
+
+    rotmat[2, 2] = (
+        cos_th ** 2 * cos_wt + sin_th ** 2
+    )
+
+    return rotmat
+
+
+@nb.jit(nb.float64[:, :](nb.float64, nb.float64, nb.float64[:], nb.float64[:],
+                         nb.float64, nb.float64, nb.float64),
+        nopython=True)
+def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
+    """Returns rotation angle around z-axis due to off-resonance (single).
+
+    Args:
+        b1_amp (float): B1 amplitude in G
+        phi (float): B1 phase in radian
+        g (`ndarray`): (3,) gradient amplitude in G/cm
+        r (`ndarray`): (3,) position vector in cm
+        df (float): off-resonance in Hz
+        dt (float): time-step in sec
+        gamma (float): gyromagnetic ratio over 2*PI in Hz/G
+
+    Returns:
+        `ndarray`: (3, 3)-rotation matrix
+
+    Notes:
+        - Right-hand notation
+        - full matrix: Rz(phase) * (RF pulse rotation matrix) * Rz(-phase)
+        - RF pulse rotation matrix: Ry(theta) * Rx(-w) * Ry(-theta)
+        - Reference: Multidimensional NMR in Liquid by Frank F. M. van de Ven.
+          But in this book, the matrix is Ry(-theta) * Rx(-w) * Ry(theta).
+          (See the equation above 1.16.)
+          I think the matrix should be Ry(theta) * Rx(-w) * Ry(-theta),
+          as implemented in this code, because the left-hand rotation changes
+          the coordinate. (Figure 1.5.)
+    """
+
+    # field offset (negative), "Omega = w0 - w"
+
+    offset = -(np.sum(g * r) + df / gamma)
+
+    # effective B-field
+
+    b_eff = np.sqrt(b1_amp ** 2 + offset ** 2)    # (1.15)
+
+    # prepare rotation of the reference frame
+    # (new x-axis is parallel to the effective B-field.)
+
+    if np.isclose(b_eff, 0):
+        sin_th = 0
+        cos_th = 1
+    else:
+        sin_th = offset / b_eff    # sin(theta), (1.16)
+        cos_th = b1_amp / b_eff     # cos(theta), (1.16)
+
+    # rotation angle in radian
+
+    wt = 2.0 * np.pi * gamma * b_eff * dt
+
+    # rotation matrix
+
+    sin_phi = np.sin(phi)
+    cos_phi = np.cos(phi)
+    sin_wt = np.sin(wt)
+    cos_wt = np.cos(wt)
+
+    rotmat = np.zeros((3, 3), dtype='float64')
+
+    rotmat[0, 0] = (
+        (
+            cos_th ** 2 * cos_phi + sin_th * (
+                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
+            )
+        ) * cos_phi - (
+            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
+        ) * sin_phi
+    )
+
+    rotmat[0, 1] = (
+        (
+            cos_th ** 2 * cos_phi + sin_th * (
+                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
+            )
+        ) * sin_phi + (
+            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
+        ) * cos_phi
+    )
+
+    rotmat[0, 2] = (
+        -cos_th * sin_th * cos_phi
+        + cos_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    )
+
+    rotmat[1, 0] = (
+        (
+            cos_th ** 2 * sin_phi + sin_th * (
+                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
+            )
+        ) * cos_phi - (
+            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
+        ) * sin_phi
+    )
+
+    rotmat[1, 1] = (
+        (
+            cos_th ** 2 * sin_phi + sin_th * (
+                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
+            )
+        ) * sin_phi + (
+            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
+        ) * cos_phi
+    )
+
+    rotmat[1, 2] = (
+        -cos_th * sin_th * sin_phi
+        + cos_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    )
+
+    rotmat[2, 0] = (
+        cos_th * sin_phi * sin_wt
+        + (cos_th * sin_th * cos_wt - cos_th * sin_th) * cos_phi
+    )
+
+    rotmat[2, 1] = (
+        -cos_th * sin_wt * cos_phi
+        + (cos_th * sin_th * cos_wt - cos_th * sin_th) * sin_phi
+    )
+
+    rotmat[2, 2] = (
+        cos_th ** 2 * cos_wt + sin_th ** 2
+    )
+
+    return rotmat
 
 
 @nb.jit(nb.types.Tuple((nb.float64[:], nb.float64[:, :], nb.float64[:]))(
