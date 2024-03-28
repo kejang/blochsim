@@ -9,6 +9,7 @@ from multiprocessing import Pool
 def plot_m_3d(fig,
               ms=[[0, 0, 1]],
               axis_limit=0.75,
+              sphere_scale=1.0,
               color='#000000',
               marker='o',
               markersize=2.0,
@@ -21,7 +22,8 @@ def plot_m_3d(fig,
     Args:
         fig (`plt.figure`): matplotlib.pyplot.figure
         ms (list): list of m's, i.e., [[0, 0, 1]]
-        axis_limit (int): value for set_xlim3d. should be less than one.
+        axis_limit (float): value for set_xlim3d. should be less than one
+        sphere_scale (float): scale for background sphere and axes
         color (str | list): color of m's (str: single, list: multiple colors)
         marker (str): marker of tip
         markersize (int): marker size
@@ -45,9 +47,9 @@ def plot_m_3d(fig,
     # draw a unit sphere
 
     u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-    x = np.cos(u)*np.sin(v)
-    y = np.sin(u)*np.sin(v)
-    z = np.cos(v)
+    x = sphere_scale*np.cos(u)*np.sin(v)
+    y = sphere_scale*np.sin(u)*np.sin(v)
+    z = sphere_scale*np.cos(v)
 
     for i in range(x.shape[0]):
         ax.plot(x[i], y[i], z[i],
@@ -64,19 +66,19 @@ def plot_m_3d(fig,
     # draw x, y, z axis
     # in old matplotlib, quiver is broken for negative values
 
-    ax.quiver([0], [0], [0], [1], [0], [0],
+    ax.quiver([0], [0], [0], [sphere_scale], [0], [0],
               color='#A0A0A0',
               linestyle='dashed',
               linewidth=linewidth*0.5,
               arrow_length_ratio=0.05)
 
-    ax.quiver([0], [0], [0], [0], [1], [0],
+    ax.quiver([0], [0], [0], [0], [sphere_scale], [0],
               color='#A0A0A0',
               linestyle='dashed',
               linewidth=linewidth*0.5,
               arrow_length_ratio=0.05)
 
-    ax.quiver([0], [0], [0], [0], [0], [1],
+    ax.quiver([0], [0], [0], [0], [0], [sphere_scale],
               color='#A0A0A0',
               linestyle='dashed',
               linewidth=linewidth*0.5,
@@ -125,7 +127,7 @@ def plot_m_xy(fig,
     Args:
         fig (`plt.figure`): matplotlib.pyplot.figure
         ms (list): list of m's, i.e., [[0, 0, 1]]
-        axis_limit (int): value for set_xlim. should be less than one.
+        axis_limit (float): value for set_xlim. should be less than one.
         color (str | list): color of m's (str: single, list: multiple colors)
         marker (str): marker of tip
         markersize (int): marker size
@@ -180,6 +182,7 @@ def export_to_image_3d(ms_and_ind,
                        dpi=300,
                        transparent=False,
                        axis_limit=0.75,
+                       sphere_scale=1.0,
                        color='#000000',
                        marker='o',
                        markersize=2,
@@ -199,7 +202,8 @@ def export_to_image_3d(ms_and_ind,
         figsize (tuple): figure size in inches
         dpi (int): dots-per-inch
         transparent (bool): option of savefig
-        axis_limit (int): value for set_xlim3d. should be less than one.
+        axis_limit (float): value for set_xlim3d. should be less than one.
+        sphere_scale (float): scale for background sphere and axes
         color (str | list): color of m's (str: single, list: multiple colors)
         marker (str): marker of tip
         markersize (int): marker size
@@ -217,6 +221,7 @@ def export_to_image_3d(ms_and_ind,
     plot_m_3d(fig,
               ms,
               axis_limit=axis_limit,
+              sphere_scale=sphere_scale,
               color=color,
               marker=marker,
               markersize=markersize,
@@ -269,7 +274,7 @@ def export_to_image_xy(ms_and_ind,
         figsize (tuple): figure size in inches
         dpi (int): dots-per-inch
         transparent (bool): option of savefig
-        axis_limit (int): value for set_xlim3d. should be less than one.
+        axis_limit (float): value for set_xlim3d. should be less than one.
         color (str | list): color of m's (str: single, list: multiple colors)
         marker (str): marker of tip
         markersize (int): marker size
@@ -318,6 +323,7 @@ def export_to_images_3d(target_dir,
                         dpi=300,
                         transparent=False,
                         axis_limit=0.75,
+                        sphere_scale=1.0,
                         color='#000000',
                         marker='o',
                         markersize=2,
@@ -339,7 +345,8 @@ def export_to_images_3d(target_dir,
         figsize (tuple): figure size in inches
         dpi (int): dots-per-inch
         transparent (bool): option of savefig
-        axis_limit (int): value for set_xlim3d. should be less than one.
+        axis_limit (float): value for set_xlim3d. should be less than one.
+        sphere_scale (float): scale for background sphere and axes
         color (str): color of m
         marker (str): marker of tip
         markersize (int): marker size
@@ -361,6 +368,7 @@ def export_to_images_3d(target_dir,
                    dpi=dpi,
                    transparent=transparent,
                    axis_limit=axis_limit,
+                   sphere_scale=sphere_scale,
                    color=color,
                    marker=marker,
                    markersize=markersize,
@@ -410,7 +418,7 @@ def export_to_images_xy(target_dir,
         figsize (tuple): figure size in inches
         dpi (int): dots-per-inch
         transparent (bool): option of savefig
-        axis_limit (int): value for set_xlim3d. should be less than one.
+        axis_limit (float): value for set_xlim3d. should be less than one.
         color (str): color of m
         marker (str): marker of tip
         markersize (int): marker size

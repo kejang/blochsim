@@ -1,20 +1,22 @@
 import numpy as np
+from numpy import ndarray
 
 
-def rfscaleg(rf, t, gamma=4257.58):
-    """Convert scaled rf to that in Gauss.
+def rfscaleg(rf: ndarray, t: float, gamma: float = 4257.58) -> ndarray:
+    """
+    Scales RF pulse to units of Gauss. sum(input rf) == flip angle in radian.
 
     Args:
-        rf (`ndarray`): scaled rf waveform (sum(rf) = flip angle)
-        t (float): duration of RF pulse in ms
-        gamma (float): gyromagnetic ratio in Hz/G
+        rf (ndarray): scaled RF waveform
+        t (float): Duration of the RF pulse in milliseconds.
+        gamma (float): Gyromagnetic ratio in Hz/G.
 
     Returns:
-        numpy array: rf waveform scaled to Gauss
+        ndarray: RF waveform scaled to Gauss.
     """
 
-    dt = t/rf.size
-    return rf / (2*np.pi*gamma*1e-3*dt)
+    dt = t / rf.size
+    return rf / (2 * np.pi * gamma * dt * 1e-3)
 
 
 def get_hard_pulse(
@@ -42,17 +44,17 @@ def get_hard_pulse(
         - See John Pauly's rftools
     """
 
-    n = flip_ang/b1_max/(2*np.pi*gamma*1e-3)/(RF_UPDATE_TIME/1000)
-    n = int((n + multiple_of_n - 1)/multiple_of_n)*multiple_of_n
+    n = flip_ang / b1_max / (2 * np.pi * gamma * 1e-3) / (RF_UPDATE_TIME / 1000)
+    n = int((n + multiple_of_n - 1) / multiple_of_n) * multiple_of_n
 
     if precision == 'double':
         rf = np.ones(n, dtype='complex128')
     else:
         rf = np.ones(n, dtype='complex64')
 
-    rf = rf/np.sum(rf)*flip_ang
+    rf = rf / np.sum(rf) * flip_ang
 
-    return rfscaleg(rf, n*RF_UPDATE_TIME/1000)
+    return rfscaleg(rf, n * RF_UPDATE_TIME / 1000)
 
 
 def design_hyperbolic_secant_pulse(b1_max, dur, tbw, beta, RF_UPDATE_TIME=2):
@@ -77,11 +79,11 @@ def design_hyperbolic_secant_pulse(b1_max, dur, tbw, beta, RF_UPDATE_TIME=2):
             mu = pi/beta * (tbw / (dur * 1e-3))
     """
 
-    n = int(2*np.round(0.5 * dur * 1e3 / RF_UPDATE_TIME))
-    t = np.linspace(-0.5*dur*1e-3, 0.5*dur*1e-3, n + 1, endpoint=True)[1:]
+    n = int(2 * np.round(0.5 * dur * 1e3 / RF_UPDATE_TIME))
+    t = np.linspace(-0.5 * dur * 1e-3, 0.5 * dur * 1e-3, n + 1, endpoint=True)[1:]
 
     b1_rho = b1_max / np.cosh(beta * t)                              # (6.36)
-    mu = np.pi/beta * (tbw / (dur * 1e-3))                           # (6.42)
+    mu = np.pi / beta * (tbw / (dur * 1e-3))                           # (6.42)
     b1_phs = mu * -np.log(np.cosh(beta * t)) + mu * np.log(b1_max)   # (6.37)
     b1 = b1_rho * np.exp(1j * b1_phs)                                # (6.35)
 
