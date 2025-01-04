@@ -2,7 +2,7 @@ import numpy as np
 from numpy import ndarray
 
 
-def rfscaleg(rf: ndarray, t: float, gamma: float = 4257.58) -> ndarray:
+def rfscaleg(rf, t, gamma=4257.58):
     """
     Scales RF pulse to units of Gauss. sum(input rf) == flip angle in radian.
 
@@ -25,7 +25,7 @@ def get_hard_pulse(
     RF_UPDATE_TIME=2,
     multiple_of_n=4,
     gamma=4257.58,
-    precision='single'
+    precision="single",
 ):
     """Returns a Hard pulse.
 
@@ -47,10 +47,10 @@ def get_hard_pulse(
     n = flip_ang / b1_max / (2 * np.pi * gamma * 1e-3) / (RF_UPDATE_TIME / 1000)
     n = int((n + multiple_of_n - 1) / multiple_of_n) * multiple_of_n
 
-    if precision == 'double':
-        rf = np.ones(n, dtype='complex128')
+    if precision == "double":
+        rf = np.ones(n, dtype="complex128")
     else:
-        rf = np.ones(n, dtype='complex64')
+        rf = np.ones(n, dtype="complex64")
 
     rf = rf / np.sum(rf) * flip_ang
 
@@ -82,9 +82,9 @@ def design_hyperbolic_secant_pulse(b1_max, dur, tbw, beta, RF_UPDATE_TIME=2):
     n = int(2 * np.round(0.5 * dur * 1e3 / RF_UPDATE_TIME))
     t = np.linspace(-0.5 * dur * 1e-3, 0.5 * dur * 1e-3, n + 1, endpoint=True)[1:]
 
-    b1_rho = b1_max / np.cosh(beta * t)                              # (6.36)
-    mu = np.pi / beta * (tbw / (dur * 1e-3))                           # (6.42)
-    b1_phs = mu * -np.log(np.cosh(beta * t)) + mu * np.log(b1_max)   # (6.37)
-    b1 = b1_rho * np.exp(1j * b1_phs)                                # (6.35)
+    b1_rho = b1_max / np.cosh(beta * t)  # (6.36)
+    mu = np.pi / beta * (tbw / (dur * 1e-3))  # (6.42)
+    b1_phs = mu * -np.log(np.cosh(beta * t)) + mu * np.log(b1_max)  # (6.37)
+    b1 = b1_rho * np.exp(1j * b1_phs)  # (6.35)
 
     return b1, b1_rho, b1_phs

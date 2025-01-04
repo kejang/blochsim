@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'blochsim'
-copyright = '2022, Kwang Eun Jang'
+copyright = 'Kwang Eun Jang'
 author = 'Kwang Eun Jang'
 
 

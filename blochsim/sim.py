@@ -3,14 +3,14 @@ import numba as nb
 from numba.core.errors import (
     NumbaDeprecationWarning,
     NumbaPendingDeprecationWarning,
-    NumbaPerformanceWarning
+    NumbaPerformanceWarning,
 )
 import warnings
 
 
-warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
-warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
-warnings.simplefilter('ignore', category=NumbaPerformanceWarning)
+warnings.simplefilter("ignore", category=NumbaDeprecationWarning)
+warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
+warnings.simplefilter("ignore", category=NumbaPerformanceWarning)
 
 
 def blochsim(
@@ -24,7 +24,7 @@ def blochsim(
     gamma=4257.59,
     m0=[0, 0, 1],
     is_static=True,
-    precision='single'
+    precision="single",
 ):
     """Bloch simulator
 
@@ -47,27 +47,27 @@ def blochsim(
 
     n = len(b1)
 
-    if precision == 'double':
-        ms = np.zeros((n, 3), dtype='float64')
-        b1_amp = np.array(np.abs(b1), dtype='float64')
-        b1_phs = np.array(np.angle(b1), dtype='float64')
-        g = np.array(g, dtype='float64')
-        r = np.array(r, dtype='float64')
-        df = np.array(df, dtype='float64')
-        m = np.array(m0, dtype='float64')
-        a = np.eye(3, dtype='float64')
-        b = np.zeros((3,), dtype='float64')
+    if precision == "double":
+        ms = np.zeros((n, 3), dtype="float64")
+        b1_amp = np.array(np.abs(b1), dtype="float64")
+        b1_phs = np.array(np.angle(b1), dtype="float64")
+        g = np.array(g, dtype="float64")
+        r = np.array(r, dtype="float64")
+        df = np.array(df, dtype="float64")
+        m = np.array(m0, dtype="float64")
+        a = np.eye(3, dtype="float64")
+        b = np.zeros((3,), dtype="float64")
         blochsim_t = blochsim_t_64
     else:
-        ms = np.zeros((n, 3), dtype='float32')
-        b1_amp = np.array(np.abs(b1), dtype='float32')
-        b1_phs = np.array(np.angle(b1), dtype='float32')
-        g = np.array(g, dtype='float32')
-        r = np.array(r, dtype='float32')
-        df = np.array(df, dtype='float32')
-        m = np.array(m0, dtype='float32')
-        a = np.eye(3, dtype='float32')
-        b = np.zeros((3,), dtype='float32')
+        ms = np.zeros((n, 3), dtype="float32")
+        b1_amp = np.array(np.abs(b1), dtype="float32")
+        b1_phs = np.array(np.angle(b1), dtype="float32")
+        g = np.array(g, dtype="float32")
+        r = np.array(r, dtype="float32")
+        df = np.array(df, dtype="float32")
+        m = np.array(m0, dtype="float32")
+        a = np.eye(3, dtype="float32")
+        b = np.zeros((3,), dtype="float32")
         blochsim_t = blochsim_t_32
 
     for i in range(n):
@@ -77,8 +77,7 @@ def blochsim(
             r_t = r[i]
 
         m, a, b = blochsim_t(
-            b1_amp[i], b1_phs[i], g[i], dt[i], r_t, df[i], t1, t2, gamma, m,
-            a, b
+            b1_amp[i], b1_phs[i], g[i], dt[i], r_t, df[i], t1, t2, gamma, m, a, b
         )
 
         ms[i] = m
@@ -99,7 +98,7 @@ def get_decay_matrix_64(t1, t2, dt):
         ndarray: decay matrix (3, 3)
     """
 
-    decay = np.zeros((3, 3), dtype='float64')
+    decay = np.zeros((3, 3), dtype="float64")
     decay[0, 0] = np.exp(-dt / t2)
     decay[1, 1] = np.exp(-dt / t2)
     decay[2, 2] = np.exp(-dt / t1)
@@ -120,7 +119,7 @@ def get_decay_matrix_32(t1, t2, dt):
         ndarray: decay matrix (3, 3)
     """
 
-    decay = np.zeros((3, 3), dtype='float32')
+    decay = np.zeros((3, 3), dtype="float32")
     decay[0, 0] = np.exp(-dt / t2)
     decay[1, 1] = np.exp(-dt / t2)
     decay[2, 2] = np.exp(-dt / t1)
@@ -141,7 +140,7 @@ def get_recovery_vector_64(t1, t2, dt):
         ndarray: recovery vector (3,)
     """
 
-    recov = np.zeros((3,), dtype='float64')
+    recov = np.zeros((3,), dtype="float64")
     recov[2] = 1 - np.exp(-dt / t1)
 
     return recov
@@ -160,15 +159,24 @@ def get_recovery_vector_32(t1, t2, dt):
         `ndarray`: recovery vector (3,)
     """
 
-    recov = np.zeros((3,), dtype='float32')
+    recov = np.zeros((3,), dtype="float32")
     recov[2] = 1 - np.exp(-dt / t1)
 
     return recov
 
 
-@nb.jit(nb.float32[:, :](nb.float32, nb.float32, nb.float32[:], nb.float32[:],
-                         nb.float32, nb.float32, nb.float32),
-        nopython=True)
+@nb.jit(
+    nb.float32[:, :](
+        nb.float32,
+        nb.float32,
+        nb.float32[:],
+        nb.float32[:],
+        nb.float32,
+        nb.float32,
+        nb.float32,
+    ),
+    nopython=True,
+)
 def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance (single).
 
@@ -202,7 +210,7 @@ def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
 
     # effective B-field
 
-    b_eff = np.sqrt(b1_amp ** 2 + offset ** 2)    # (1.15)
+    b_eff = np.sqrt(b1_amp**2 + offset**2)  # (1.15)
 
     # prepare rotation of the reference frame
     # (new x-axis is parallel to the effective B-field.)
@@ -211,8 +219,8 @@ def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
         s = 0
         c = 1
     else:
-        s = offset / b_eff    # sin(theta), (1.16)
-        c = b1_amp / b_eff     # cos(theta), (1.16)
+        s = offset / b_eff  # sin(theta), (1.16)
+        c = b1_amp / b_eff  # cos(theta), (1.16)
 
     # rotation angle in radian
 
@@ -220,7 +228,7 @@ def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
 
     # left-hand rotation around x (effective B-field)
 
-    rmtx = np.zeros((3, 3), dtype='float32')
+    rmtx = np.zeros((3, 3), dtype="float32")
     rmtx[0, 0] = 1
     rmtx[0, 1] = 0
     rmtx[0, 2] = 0
@@ -235,8 +243,8 @@ def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
 
     # change the reference coordinate: new x-axis == effective B-field
 
-    rmtx_y_pos = np.zeros((3, 3), dtype='float32')
-    rmtx_y_neg = np.zeros((3, 3), dtype='float32')
+    rmtx_y_pos = np.zeros((3, 3), dtype="float32")
+    rmtx_y_neg = np.zeros((3, 3), dtype="float32")
 
     rmtx_y_pos[0, 0] = c
     rmtx_y_pos[0, 1] = 0
@@ -264,8 +272,8 @@ def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
 
     # phase of B1
 
-    rmtx_z_pos = np.zeros((3, 3), dtype='float32')
-    rmtx_z_neg = np.zeros((3, 3), dtype='float32')
+    rmtx_z_pos = np.zeros((3, 3), dtype="float32")
+    rmtx_z_neg = np.zeros((3, 3), dtype="float32")
 
     rmtx_z_pos[0, 0] = np.cos(phi)
     rmtx_z_pos[0, 1] = -np.sin(phi)
@@ -295,12 +303,21 @@ def get_rotation_matrix_naive_32(b1_amp, phi, g, r, df, dt, gamma):
 
     rotmat = rmtx_z_pos @ rmtx_y_pos @ rmtx @ rmtx_y_neg @ rmtx_z_neg
 
-    return rotmat.astype('float32')
+    return rotmat.astype("float32")
 
 
-@nb.jit(nb.float64[:, :](nb.float64, nb.float64, nb.float64[:], nb.float64[:],
-                         nb.float64, nb.float64, nb.float64),
-        nopython=True)
+@nb.jit(
+    nb.float64[:, :](
+        nb.float64,
+        nb.float64,
+        nb.float64[:],
+        nb.float64[:],
+        nb.float64,
+        nb.float64,
+        nb.float64,
+    ),
+    nopython=True,
+)
 def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance (single).
 
@@ -334,7 +351,7 @@ def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
 
     # effective B-field
 
-    b_eff = np.sqrt(b1_amp ** 2 + offset ** 2)    # (1.15)
+    b_eff = np.sqrt(b1_amp**2 + offset**2)  # (1.15)
 
     # prepare rotation of the reference frame
     # (new x-axis is parallel to the effective B-field.)
@@ -343,8 +360,8 @@ def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
         s = 0
         c = 1
     else:
-        s = offset / b_eff    # sin(theta), (1.16)
-        c = b1_amp / b_eff     # cos(theta), (1.16)
+        s = offset / b_eff  # sin(theta), (1.16)
+        c = b1_amp / b_eff  # cos(theta), (1.16)
 
     # rotation angle in radian
 
@@ -352,7 +369,7 @@ def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
 
     # left-hand rotation around x (effective B-field)
 
-    rmtx = np.zeros((3, 3), dtype='float64')
+    rmtx = np.zeros((3, 3), dtype="float64")
     rmtx[0, 0] = 1
     rmtx[0, 1] = 0
     rmtx[0, 2] = 0
@@ -367,8 +384,8 @@ def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
 
     # change the reference coordinate: new x-axis == effective B-field
 
-    rmtx_y_pos = np.zeros((3, 3), dtype='float64')
-    rmtx_y_neg = np.zeros((3, 3), dtype='float64')
+    rmtx_y_pos = np.zeros((3, 3), dtype="float64")
+    rmtx_y_neg = np.zeros((3, 3), dtype="float64")
 
     rmtx_y_pos[0, 0] = c
     rmtx_y_pos[0, 1] = 0
@@ -396,8 +413,8 @@ def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
 
     # phase of B1
 
-    rmtx_z_pos = np.zeros((3, 3), dtype='float64')
-    rmtx_z_neg = np.zeros((3, 3), dtype='float64')
+    rmtx_z_pos = np.zeros((3, 3), dtype="float64")
+    rmtx_z_neg = np.zeros((3, 3), dtype="float64")
 
     rmtx_z_pos[0, 0] = np.cos(phi)
     rmtx_z_pos[0, 1] = -np.sin(phi)
@@ -427,12 +444,21 @@ def get_rotation_matrix_naive_64(b1_amp, phi, g, r, df, dt, gamma):
 
     rotmat = rmtx_z_pos @ rmtx_y_pos @ rmtx @ rmtx_y_neg @ rmtx_z_neg
 
-    return rotmat.astype('float64')
+    return rotmat.astype("float64")
 
 
-@nb.jit(nb.float32[:, :](nb.float32, nb.float32, nb.float32[:], nb.float32[:],
-                         nb.float32, nb.float32, nb.float32),
-        nopython=True)
+@nb.jit(
+    nb.float32[:, :](
+        nb.float32,
+        nb.float32,
+        nb.float32[:],
+        nb.float32[:],
+        nb.float32,
+        nb.float32,
+        nb.float32,
+    ),
+    nopython=True,
+)
 def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance (single).
 
@@ -466,7 +492,7 @@ def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
 
     # effective B-field
 
-    b_eff = np.sqrt(b1_amp ** 2 + offset ** 2)    # (1.15)
+    b_eff = np.sqrt(b1_amp**2 + offset**2)  # (1.15)
 
     # prepare rotation of the reference frame
     # (new x-axis is parallel to the effective B-field.)
@@ -475,8 +501,8 @@ def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
         sin_th = 0
         cos_th = 1
     else:
-        sin_th = offset / b_eff    # sin(theta), (1.16)
-        cos_th = b1_amp / b_eff     # cos(theta), (1.16)
+        sin_th = offset / b_eff  # sin(theta), (1.16)
+        cos_th = b1_amp / b_eff  # cos(theta), (1.16)
 
     # rotation angle in radian
 
@@ -489,56 +515,30 @@ def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
     sin_wt = np.sin(wt)
     cos_wt = np.cos(wt)
 
-    rotmat = np.zeros((3, 3), dtype='float32')
+    rotmat = np.zeros((3, 3), dtype="float32")
 
     rotmat[0, 0] = (
-        (
-            cos_th ** 2 * cos_phi + sin_th * (
-                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
-            )
-        ) * cos_phi - (
-            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
-        ) * sin_phi
-    )
+        cos_th**2 * cos_phi + sin_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    ) * cos_phi - (-sin_th * sin_wt * cos_phi - sin_phi * cos_wt) * sin_phi
 
     rotmat[0, 1] = (
-        (
-            cos_th ** 2 * cos_phi + sin_th * (
-                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
-            )
-        ) * sin_phi + (
-            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
-        ) * cos_phi
-    )
+        cos_th**2 * cos_phi + sin_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    ) * sin_phi + (-sin_th * sin_wt * cos_phi - sin_phi * cos_wt) * cos_phi
 
-    rotmat[0, 2] = (
-        -cos_th * sin_th * cos_phi
-        + cos_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    rotmat[0, 2] = -cos_th * sin_th * cos_phi + cos_th * (
+        sin_th * cos_phi * cos_wt - sin_phi * sin_wt
     )
 
     rotmat[1, 0] = (
-        (
-            cos_th ** 2 * sin_phi + sin_th * (
-                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
-            )
-        ) * cos_phi - (
-            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
-        ) * sin_phi
-    )
+        cos_th**2 * sin_phi + sin_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    ) * cos_phi - (-sin_th * sin_phi * sin_wt + cos_phi * cos_wt) * sin_phi
 
     rotmat[1, 1] = (
-        (
-            cos_th ** 2 * sin_phi + sin_th * (
-                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
-            )
-        ) * sin_phi + (
-            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
-        ) * cos_phi
-    )
+        cos_th**2 * sin_phi + sin_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    ) * sin_phi + (-sin_th * sin_phi * sin_wt + cos_phi * cos_wt) * cos_phi
 
-    rotmat[1, 2] = (
-        -cos_th * sin_th * sin_phi
-        + cos_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    rotmat[1, 2] = -cos_th * sin_th * sin_phi + cos_th * (
+        sin_th * sin_phi * cos_wt + sin_wt * cos_phi
     )
 
     rotmat[2, 0] = (
@@ -551,16 +551,23 @@ def get_rotation_matrix_32(b1_amp, phi, g, r, df, dt, gamma):
         + (cos_th * sin_th * cos_wt - cos_th * sin_th) * sin_phi
     )
 
-    rotmat[2, 2] = (
-        cos_th ** 2 * cos_wt + sin_th ** 2
-    )
+    rotmat[2, 2] = cos_th**2 * cos_wt + sin_th**2
 
     return rotmat
 
 
-@nb.jit(nb.float64[:, :](nb.float64, nb.float64, nb.float64[:], nb.float64[:],
-                         nb.float64, nb.float64, nb.float64),
-        nopython=True)
+@nb.jit(
+    nb.float64[:, :](
+        nb.float64,
+        nb.float64,
+        nb.float64[:],
+        nb.float64[:],
+        nb.float64,
+        nb.float64,
+        nb.float64,
+    ),
+    nopython=True,
+)
 def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
     """Returns rotation angle around z-axis due to off-resonance (single).
 
@@ -594,7 +601,7 @@ def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
 
     # effective B-field
 
-    b_eff = np.sqrt(b1_amp ** 2 + offset ** 2)    # (1.15)
+    b_eff = np.sqrt(b1_amp**2 + offset**2)  # (1.15)
 
     # prepare rotation of the reference frame
     # (new x-axis is parallel to the effective B-field.)
@@ -603,8 +610,8 @@ def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
         sin_th = 0
         cos_th = 1
     else:
-        sin_th = offset / b_eff    # sin(theta), (1.16)
-        cos_th = b1_amp / b_eff     # cos(theta), (1.16)
+        sin_th = offset / b_eff  # sin(theta), (1.16)
+        cos_th = b1_amp / b_eff  # cos(theta), (1.16)
 
     # rotation angle in radian
 
@@ -617,56 +624,30 @@ def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
     sin_wt = np.sin(wt)
     cos_wt = np.cos(wt)
 
-    rotmat = np.zeros((3, 3), dtype='float64')
+    rotmat = np.zeros((3, 3), dtype="float64")
 
     rotmat[0, 0] = (
-        (
-            cos_th ** 2 * cos_phi + sin_th * (
-                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
-            )
-        ) * cos_phi - (
-            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
-        ) * sin_phi
-    )
+        cos_th**2 * cos_phi + sin_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    ) * cos_phi - (-sin_th * sin_wt * cos_phi - sin_phi * cos_wt) * sin_phi
 
     rotmat[0, 1] = (
-        (
-            cos_th ** 2 * cos_phi + sin_th * (
-                sin_th * cos_phi * cos_wt - sin_phi * sin_wt
-            )
-        ) * sin_phi + (
-            -sin_th * sin_wt * cos_phi - sin_phi * cos_wt
-        ) * cos_phi
-    )
+        cos_th**2 * cos_phi + sin_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    ) * sin_phi + (-sin_th * sin_wt * cos_phi - sin_phi * cos_wt) * cos_phi
 
-    rotmat[0, 2] = (
-        -cos_th * sin_th * cos_phi
-        + cos_th * (sin_th * cos_phi * cos_wt - sin_phi * sin_wt)
+    rotmat[0, 2] = -cos_th * sin_th * cos_phi + cos_th * (
+        sin_th * cos_phi * cos_wt - sin_phi * sin_wt
     )
 
     rotmat[1, 0] = (
-        (
-            cos_th ** 2 * sin_phi + sin_th * (
-                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
-            )
-        ) * cos_phi - (
-            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
-        ) * sin_phi
-    )
+        cos_th**2 * sin_phi + sin_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    ) * cos_phi - (-sin_th * sin_phi * sin_wt + cos_phi * cos_wt) * sin_phi
 
     rotmat[1, 1] = (
-        (
-            cos_th ** 2 * sin_phi + sin_th * (
-                sin_th * sin_phi * cos_wt + sin_wt * cos_phi
-            )
-        ) * sin_phi + (
-            -sin_th * sin_phi * sin_wt + cos_phi * cos_wt
-        ) * cos_phi
-    )
+        cos_th**2 * sin_phi + sin_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    ) * sin_phi + (-sin_th * sin_phi * sin_wt + cos_phi * cos_wt) * cos_phi
 
-    rotmat[1, 2] = (
-        -cos_th * sin_th * sin_phi
-        + cos_th * (sin_th * sin_phi * cos_wt + sin_wt * cos_phi)
+    rotmat[1, 2] = -cos_th * sin_th * sin_phi + cos_th * (
+        sin_th * sin_phi * cos_wt + sin_wt * cos_phi
     )
 
     rotmat[2, 0] = (
@@ -679,28 +660,28 @@ def get_rotation_matrix_64(b1_amp, phi, g, r, df, dt, gamma):
         + (cos_th * sin_th * cos_wt - cos_th * sin_th) * sin_phi
     )
 
-    rotmat[2, 2] = (
-        cos_th ** 2 * cos_wt + sin_th ** 2
-    )
+    rotmat[2, 2] = cos_th**2 * cos_wt + sin_th**2
 
     return rotmat
 
 
-@nb.jit(nb.types.Tuple((nb.float64[:], nb.float64[:, :], nb.float64[:]))(
-        nb.float64,     # b1_amp_t
-        nb.float64,     # b1_phs_t
-        nb.float64[:],     # g_t
-        nb.float64,        # dt_t
-        nb.float64[:],     # r_t
-        nb.float64,        # df_t
-        nb.float64,        # t1
-        nb.float64,        # t2
-        nb.float64,        # gamma
-        nb.float64[:],     # m
+@nb.jit(
+    nb.types.Tuple((nb.float64[:], nb.float64[:, :], nb.float64[:]))(
+        nb.float64,  # b1_amp_t
+        nb.float64,  # b1_phs_t
+        nb.float64[:],  # g_t
+        nb.float64,  # dt_t
+        nb.float64[:],  # r_t
+        nb.float64,  # df_t
+        nb.float64,  # t1
+        nb.float64,  # t2
+        nb.float64,  # gamma
+        nb.float64[:],  # m
         nb.float64[:, :],  # a0
-        nb.float64[:],     # b0
-        ),
-        nopython=True)
+        nb.float64[:],  # b0
+    ),
+    nopython=True,
+)
 def blochsim_t_64(
     b1_amp_t,
     b1_phs_t,
@@ -737,9 +718,7 @@ def blochsim_t_64(
 
     # rotation due to RF pulse, gradient, and off-resonance
 
-    rotmat = get_rotation_matrix_64(
-        b1_amp_t, b1_phs_t, g_t, r_t, df_t, dt_t, gamma
-    )
+    rotmat = get_rotation_matrix_64(b1_amp_t, b1_phs_t, g_t, r_t, df_t, dt_t, gamma)
     m = np.dot(rotmat, m)
 
     # T1, T2 decay and T1 recovery
@@ -758,21 +737,23 @@ def blochsim_t_64(
     return m, a, b
 
 
-@nb.jit(nb.types.Tuple((nb.float32[:], nb.float32[:, :], nb.float32[:]))(
-        nb.float32,     # b1_amp_t
-        nb.float32,     # b1_phs_t
-        nb.float32[:],     # g_t
-        nb.float32,        # dt_t
-        nb.float32[:],     # r_t
-        nb.float32,        # df_t
-        nb.float32,        # t1
-        nb.float32,        # t2
-        nb.float32,        # gamma
-        nb.float32[:],     # m
+@nb.jit(
+    nb.types.Tuple((nb.float32[:], nb.float32[:, :], nb.float32[:]))(
+        nb.float32,  # b1_amp_t
+        nb.float32,  # b1_phs_t
+        nb.float32[:],  # g_t
+        nb.float32,  # dt_t
+        nb.float32[:],  # r_t
+        nb.float32,  # df_t
+        nb.float32,  # t1
+        nb.float32,  # t2
+        nb.float32,  # gamma
+        nb.float32[:],  # m
         nb.float32[:, :],  # a0
-        nb.float32[:],     # b0
-        ),
-        nopython=True)
+        nb.float32[:],  # b0
+    ),
+    nopython=True,
+)
 def blochsim_t_32(
     b1_amp_t,
     b1_phs_t,
@@ -808,9 +789,7 @@ def blochsim_t_32(
 
     # rotation due to RF pulse, gradient, and off-resonance
 
-    rotmat = get_rotation_matrix_32(
-        b1_amp_t, b1_phs_t, g_t, r_t, df_t, dt_t, gamma
-    )
+    rotmat = get_rotation_matrix_32(b1_amp_t, b1_phs_t, g_t, r_t, df_t, dt_t, gamma)
     m = np.dot(rotmat, m)
 
     # T1, T2 decay and T1 recovery

@@ -173,91 +173,8 @@ def design_concurrent_trap(
     return amp_x, amp_y, amp_z, nrmp, nplt
 
 
-# def get_trap_slice_select_composite(
-#     slthick,
-#     rf_dur,
-#     bw,
-#     include_dep=False,
-#     include_rep=False,
-#     gmax=4.0,
-#     smax=14.9,
-#     dt=4,
-#     min_plateau=2,
-#     gamma=4257.58,
-#     round_n=4,
-#     dtype="float32",
-# ):
-#     """Returns a composite gradient waveform for slice-selection.
-
-#     Args:
-#         slthick (float): slice thickness in cm
-#         rf_dur (float): rf duration in ms
-#         bw (float): rf bandwidth in Hz
-#         include_dep (bool, optional): whether to include the dephaser. Defaults to False.
-#         include_rep (bool, optional): whether to include the rephaser. Defaults to False.
-#         gmax (float, optional): maximum gradient amplitude in G/cm. Defaults to 4.0.
-#         smax (float, optional): maximum slew-rate in G/cm/ms. Defaults to 14.9.
-#         dt (int | float, optional): sampling interval in us. Defaults to 4.
-#         min_plateau (int, optional): minimum number of points of the plateau. Defaults to 2.
-#         gamma (float, optional): Gyromagnetic ratio in Hz/G. Defaults to 4257.58.
-#         round_n (int, optional): Rounding factor for the total number of points. Defaults to 4.
-#         dtype (str, optional): dtype of ndarray. Defaults to "float32".
-
-#     Returns:
-#         tuple: (ndarray, int) trapezoid and the number of points before rf.
-#     """
-
-#     amp = bw / (slthick * gamma)
-
-#     npt_rf = int(np.ceil(rf_dur * 1000 / dt))
-#     nrmp = get_nrmp(amp, smax, dt)
-#     trap_ss = get_trap(amp, nrmp, npt_rf, dtype)
-
-#     npt_delay = nrmp
-
-#     if include_dep:
-#         trap_dep, _ = get_trap_given_area(
-#             -0.5 * np.sum(trap_ss) * dt,
-#             min_plateau=min_plateau,
-#             gmax=gmax,
-#             smax=smax,
-#             dt=dt,
-#             dtype=dtype,
-#         )
-#         npt_delay += len(trap_dep)
-#     else:
-#         trap_dep = []
-
-#     if include_rep:
-#         trap_rep, _ = get_trap_given_area(
-#             -0.5 * np.sum(trap_ss) * dt,
-#             min_plateau=min_plateau,
-#             gmax=gmax,
-#             smax=smax,
-#             dt=dt,
-#             dtype=dtype,
-#         )
-#     else:
-#         trap_rep = []
-
-#     trap_temp = np.concatenate([trap_dep, trap_ss, trap_dep])
-
-#     npt_total = round_up_length(len(trap_temp), round_n)
-
-#     trap = np.zeros(npt_total, dtype=dtype)
-#     trap[: len(trap_temp)] = trap_temp
-
-#     return trap, npt_delay
-
-
 def design_trap_largest(
-    n,
-    gmax=3.9,
-    smax=14.9,
-    kmax=1e9,
-    dt=4,
-    min_plateau=2,
-    gamma=4257.58
+    n, gmax=3.9, smax=14.9, kmax=1e9, dt=4, min_plateau=2, gamma=4257.58
 ):
 
     nrmp = get_nrmp(gmax, smax, dt)
@@ -278,8 +195,8 @@ def design_trap_largest(
         b = -dt * n * (smax * 1e-3)
         c = kmax * smax / gamma * 1e3
 
-        amp_0 = 0.5 * (-b - np.sqrt(b ** 2 - 4 * c))
-        amp_1 = 0.5 * (-b + np.sqrt(b ** 2 - 4 * c))
+        amp_0 = 0.5 * (-b - np.sqrt(b**2 - 4 * c))
+        amp_1 = 0.5 * (-b + np.sqrt(b**2 - 4 * c))
         if np.abs(amp_0) < gmax:
             amp = amp_0
         else:
@@ -299,21 +216,13 @@ def get_trap_largest(
     dt=4,
     min_plateau=2,
     gamma=4257.58,
-    dtype='float32',
+    dtype="float32",
 ):
 
-    amp, nrmp, nplt = design_trap_largest(
-        n,
-        gmax,
-        smax,
-        kmax,
-        dt,
-        min_plateau,
-        gamma
-    )
+    amp, nrmp, nplt = design_trap_largest(n, gmax, smax, kmax, dt, min_plateau, gamma)
 
     trap = get_trap(amp, nrmp, nplt, dtype)
-    
+
     return trap, nrmp
 
 
@@ -322,7 +231,7 @@ def get_trap_triangle(
     smax=14.9,
     min_plateau=2,
     dt=4,
-    dtype='float32',
+    dtype="float32",
 ):
 
     nrmp = get_nrmp(amp, smax, dt)

@@ -4,10 +4,18 @@ blochsim package
 Submodules
 ----------
 
-blochsim.blochsim module
+blochsim.sim module
 ------------------------
 
-.. automodule:: blochsim.blochsim
+.. automodule:: blochsim.sim
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+blochsim.plot module
+------------------------
+
+.. automodule:: blochsim.plot
    :members:
    :undoc-members:
    :show-inheritance:

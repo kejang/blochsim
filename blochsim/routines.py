@@ -1,14 +1,9 @@
 import numpy as np
-from .blochsim import blochsim
+from .sim import blochsim
 
 
 def estimate_inversion_time(
-    t1,
-    t2,
-    time_res=1e-4,
-    df=0,
-    r=[0, 0, 0],
-    precision='single'
+    t1, t2, time_res=1e-4, df=0, r=[0, 0, 0], precision="single"
 ):
     """Estimate Inversion Time (TI).
 
@@ -25,8 +20,8 @@ def estimate_inversion_time(
     """
 
     _, a, b = blochsim(
-        b1=np.zeros(1, dtype='complex64'),
-        g=np.zeros((1, 3), dtype='float32'),
+        b1=np.zeros(1, dtype="complex64"),
+        g=np.zeros((1, 3), dtype="float32"),
         dt=[time_res],
         r=r,
         df=df,
@@ -35,10 +30,10 @@ def estimate_inversion_time(
         precision=precision,
     )
 
-    if precision == 'double':
-        m = np.array([0, 0, -1], dtype='float64')
+    if precision == "double":
+        m = np.array([0, 0, -1], dtype="float64")
     else:
-        m = np.array([0, 0, -1], dtype='float32')
+        m = np.array([0, 0, -1], dtype="float32")
 
     ti = 0
     while m[-1] < 0:
