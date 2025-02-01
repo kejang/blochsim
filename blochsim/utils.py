@@ -57,6 +57,20 @@ def get_hard_pulse(
     return rfscaleg(rf, n * RF_UPDATE_TIME / 1000)
 
 
+def get_sinc_pulse(n, m):
+    """Returns a hamming windowed sinc of length n with m sinc-cycles,
+    which means a time-bandwidth of 4*m.
+
+    Original MATLAB code was written by John Pauly, 1992
+    """
+
+    x = np.arange(-n / 2.0, (n - 1) / 2.0 + 1) / (n / 2.0)
+
+    snc = np.sin(m * 2.0 * np.pi * x + 1e-6) / (m * 2.0 * np.pi * x + 1e-6)
+    ms = snc * (0.54 + 0.46 * np.cos(np.pi * x))
+    return ms * 4 * m / n
+
+
 def design_hyperbolic_secant_pulse(b1_max, dur, tbw, beta, RF_UPDATE_TIME=2):
     """Design Adiabatic Full-passage Pulse (Hyperbolic Secant Pulse)
 
