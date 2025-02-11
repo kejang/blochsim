@@ -239,3 +239,93 @@ def get_trap_triangle(
     trap = get_trap(amp, nrmp, nplt, dtype)
 
     return trap, nrmp
+
+
+def design_refocus_waveform(bw, dur, slthick, ncyc, gmax, smax, dt, gamma=4257.58):
+    """Designs the gradient waveform for the refocus pulse in spin-echo sequences.
+
+    Args:
+        bw (float): bandwidth of the refocus pulse in Hz
+        dur (int): duration of the refocus pulse in us
+        slthick (float): slice-thickness in cm
+        ncyc (float): number of cycles of the crusher
+        gmax (float): maximum gradient amplitude in G/cm
+        smax (float): maximum slew-rate in G/cm/ms
+        dt (int): time interval in us
+        gamma (float, optional): gyromagnetic ratio. Defaults to 4257.58.
+
+    Returns:
+        tuple: amp of crusher, amp of slice-select, ramp, bridge, plateau (crusher), plateau (rf)
+    """
+
+    # initial design for crusher
+
+    _, nrmp_0, nplt_crsh_0 = design_trap_given_area(
+        ncyc / (gamma * slthick) * 1e6,
+        gmax=gmax,
+        smax=smax,
+        dt=dt,
+    )
+
+    # use the maximum area for given time
+
+    amp_crsh, nrmp, nplt_crsh = design_trap_largest(
+        (2 * nrmp_0 + nplt_crsh_0 + 1),
+        gmax=gmax,
+        smax=smax,
+        dt=dt,
+    )
+
+    # design slice-select
+
+    amp_rf = bw / (slthick * gamma)
+    nplt_rf = dur // dt
+
+    # design bridge
+
+    nbrdg = get_nrmp(np.abs(amp_crsh - amp_rf), smax, dt)
+
+    return amp_crsh, amp_rf, nrmp, nbrdg, nplt_crsh, nplt_rf
+
+
+def get_refocus_waveform(amp_crsh, amp_rf, nrmp, nbrdg, nplt_crsh, nplt_rf):
+
+    segments = []
+
+    # ramp: zero to crusher plateau
+
+    d = amp_crsh / (nrmp + 1)
+    segments.append(d * (1 + np.arange(nrmp)))
+
+    # crusher plateau
+
+    segments.append(amp_crsh * np.ones(nplt_crsh))
+
+    # crusher plateau to slice-select
+
+    d = np.abs(amp_crsh - amp_rf) / (nbrdg + 1)
+    segments.append(amp_crsh - d * (1 + np.arange(nbrdg)))
+
+    # slice-select
+
+    segments.append(amp_rf * np.ones(nplt_rf))
+
+    # slice-select to crusher plateau
+
+    d = np.abs(amp_crsh - amp_rf) / (nbrdg + 1)
+    segments.append(amp_rf + d * (1 + np.arange(nbrdg)))
+
+    # crusher plateau
+
+    segments.append(amp_crsh * np.ones(nplt_crsh))
+
+    # ramp: crusher plateau to zero
+
+    d = amp_crsh / (nrmp + 1)
+    segments.append(amp_crsh - d * (1 + np.arange(nrmp)))
+
+    # final point should be zero.
+
+    segments.append([0])
+
+    return np.concatenate(segments)
