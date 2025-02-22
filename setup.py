@@ -12,7 +12,7 @@ package_name = "blochsim"
 try:
     pkg_version = version(package_name)
 except Exception:
-    pkg_version = "0.1.5"
+    pkg_version = "0.1.6"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
