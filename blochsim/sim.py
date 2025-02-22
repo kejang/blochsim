@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import numba as nb
 from numba.core.errors import (
@@ -5,7 +7,6 @@ from numba.core.errors import (
     NumbaPendingDeprecationWarning,
     NumbaPerformanceWarning,
 )
-import warnings
 
 
 warnings.simplefilter("ignore", category=NumbaDeprecationWarning)

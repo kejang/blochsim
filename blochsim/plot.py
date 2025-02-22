@@ -1,10 +1,10 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
 
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 def plot_m_3d(
     fig,

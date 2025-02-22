@@ -1,3 +1,23 @@
 [build-system]
-requires = ["setuptools>=42"]
+requires = [
+    "setuptools>=42",
+    "wheel"
+]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "blochsim"
+version = "0.1.5"
+description = "Python Bloch Simulator"
+authors = [
+    { name = "Kwang Eun Jang", email = "kejang@stanford.edu" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.20.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/kejang/blochsim"
+Issues = "https://github.com/kejang/blochsim/issues"
